@@ -38,47 +38,16 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "description": "Create new user",
-                "consumes": [
-                    "application/json"
-                ],
+            }
+        },
+        "/creditLine": {
+            "get": {
+                "description": "get all people",
                 "tags": [
-                    "Users"
+                    "creditLine"
                 ],
-                "summary": "Create new user based on paramters",
-                "parameters": [
-                    {
-                        "description": "User Data",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/main.Person"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
+                "summary": "Get all people",
+                "responses": {}
             }
         },
         "/people": {
@@ -88,42 +57,7 @@ const docTemplate = `{
                     "people"
                 ],
                 "summary": "Get all people",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.Person"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "definitions": {
-        "main.Person": {
-            "type": "object",
-            "properties": {
-                "city": {
-                    "type": "string"
-                },
-                "firstname": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "lastname": {
-                    "type": "string"
-                }
+                "responses": {}
             }
         }
     }

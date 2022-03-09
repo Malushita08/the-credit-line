@@ -8,10 +8,10 @@ package main
 // @BasePath /
 // @schemes http
 import (
+	"github.com/Malushita08/the-credit-line/database"
+	"github.com/Malushita08/the-credit-line/services"
 	"log"
 	"net/http"
-
-	"github.com/Malushita08/the-credit-line/database"
 
 	_ "github.com/Malushita08/the-credit-line/docs"
 	"github.com/gin-gonic/gin"
@@ -22,13 +22,20 @@ import (
 
 func main() {
 	//DATABASE
-	database.ConnectDB()
+	_, err := database.ConnectDB()
+	if err != nil {
+		return
+	}
 
 	// Gin instance
 	r := gin.Default()
+	peopleRepo := services.New()
+	creditLine := services.NewCreditLine()
 
 	// Routes
-	//r.GET("/people/", GetPeople)
+	r.GET("/people/", peopleRepo.GetPeople)
+	r.GET("/creditLine/", creditLine.GetCreditLine)
+	r.POST("/creditLine/", creditLine.CreateCreditLine)
 	//r.GET("/people/:id", GetPerson)
 	//r.POST("/people", CreatePerson)
 	//r.PUT("/people/:id", UpdatePerson)
@@ -118,13 +125,7 @@ func HealthCheck(c *gin.Context) {
 //		c.JSON(200, person)
 //	}
 //}
-//
-//// @Summary Get all people
-//// @Description get all people
-//// @Tags people
-//// @Success 200 {array} Person
-//// @Failure 404 {object} object
-//// @Router /people [get]
+
 //func GetPeople(c *gin.Context) {
 //	var people []Person
 //	if err := db.Find(&people).Error; err != nil {
@@ -133,5 +134,5 @@ func HealthCheck(c *gin.Context) {
 //	} else {
 //		c.JSON(200, people)
 //	}
-
+//
 //}
