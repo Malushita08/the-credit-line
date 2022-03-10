@@ -29,13 +29,16 @@ func main() {
 
 	// Gin instance
 	r := gin.Default()
-	peopleRepo := services.New()
+
 	creditLine := services.NewCreditLine()
 
 	// Routes
-	r.GET("/people/", peopleRepo.GetPeople)
-	r.GET("/creditLine/", creditLine.GetCreditLine)
-	r.POST("/creditLine/", creditLine.CreateCreditLine)
+	r.GET("/creditLines/", creditLine.GetCreditLines)
+	r.GET("/creditLines/:id", creditLine.GetCreditLine)
+	r.POST("/creditLines/", creditLine.CreateCreditLine)
+	r.PUT("/creditLines/:id", creditLine.UpdateCreditLine)
+	r.DELETE("/creditLines/:id", creditLine.DeleteCreditLine)
+
 	//r.GET("/people/:id", GetPerson)
 	//r.POST("/people", CreatePerson)
 	//r.PUT("/people/:id", UpdatePerson)

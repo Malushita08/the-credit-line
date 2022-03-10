@@ -2,7 +2,6 @@ package models
 
 import "github.com/jinzhu/gorm"
 
-//MODEL
 type CreditLine struct {
 	ID                  uint    `bson:"_id,omitempty" json:"id,omitempty"`
 	FoundingType        string  `bson:"foundingType" json:"foundingType"`
@@ -12,8 +11,7 @@ type CreditLine struct {
 	RequestedDate       string  `bson:"requestedDate" json:"requestedDate"`
 }
 
-//get people
-func GetCreditLine(db *gorm.DB, CreditLine *[]CreditLine) (err error) {
+func GetCreditLines(db *gorm.DB, CreditLine *[]CreditLine) (err error) {
 	err = db.Find(CreditLine).Error
 	if err != nil {
 		return err
@@ -21,11 +19,28 @@ func GetCreditLine(db *gorm.DB, CreditLine *[]CreditLine) (err error) {
 	return nil
 }
 
-//create a book
+func GetCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error) {
+	err = db.Where("id = ?", id).First(CreditLine).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func CreateCreditLine(db *gorm.DB, CreditLine *CreditLine) (err error) {
 	err = db.Create(CreditLine).Error
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func UpdateCreditLine(db *gorm.DB, CreditLine *CreditLine) (err error) {
+	db.Save(CreditLine)
+	return nil
+}
+
+func DeleteCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error) {
+	db.Where("id = ?", id).Delete(CreditLine)
 	return nil
 }

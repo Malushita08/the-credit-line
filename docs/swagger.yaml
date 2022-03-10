@@ -1,4 +1,20 @@
 basePath: /
+definitions:
+  models.CreditLine:
+    properties:
+      cashBalance:
+        type: number
+      foundingType:
+        type: string
+      id:
+        type: integer
+      monthlyRevenue:
+        type: number
+      requestedCreditLine:
+        type: number
+      requestedDate:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -22,11 +38,53 @@ paths:
       summary: Show the status of server.
       tags:
       - root
-  /creditLine:
+  /creditLines:
     get:
-      description: get all people
-      responses: {}
-      summary: Get all people
+      description: get all creditLines
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.CreditLine'
+            type: array
+      summary: Get all creditLines
+      tags:
+      - creditLine
+    post:
+      consumes:
+      - application/json
+      description: Create a creditLine
+      parameters:
+      - description: creditLine Data
+        in: body
+        name: creditLine
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreditLine'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CreditLine'
+      summary: Create a creditLine
+      tags:
+      - creditLine
+  /creditLines/{id}:
+    get:
+      description: Get a creditLine by id
+      parameters:
+      - description: creditLine ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CreditLine'
+      summary: Get a creditLine by id
       tags:
       - creditLine
   /people:

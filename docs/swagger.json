@@ -36,14 +36,79 @@
                 }
             }
         },
-        "/creditLine": {
+        "/creditLines": {
             "get": {
-                "description": "get all people",
+                "description": "get all creditLines",
                 "tags": [
                     "creditLine"
                 ],
-                "summary": "Get all people",
-                "responses": {}
+                "summary": "Get all creditLines",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.CreditLine"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a creditLine",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "creditLine"
+                ],
+                "summary": "Create a creditLine",
+                "parameters": [
+                    {
+                        "description": "creditLine Data",
+                        "name": "creditLine",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreditLine"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.CreditLine"
+                        }
+                    }
+                }
+            }
+        },
+        "/creditLines/{id}": {
+            "get": {
+                "description": "Get a creditLine by id",
+                "tags": [
+                    "creditLine"
+                ],
+                "summary": "Get a creditLine by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "creditLine ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.CreditLine"
+                        }
+                    }
+                }
             }
         },
         "/people": {
@@ -54,6 +119,31 @@
                 ],
                 "summary": "Get all people",
                 "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "models.CreditLine": {
+            "type": "object",
+            "properties": {
+                "cashBalance": {
+                    "type": "number"
+                },
+                "foundingType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "monthlyRevenue": {
+                    "type": "number"
+                },
+                "requestedCreditLine": {
+                    "type": "number"
+                },
+                "requestedDate": {
+                    "type": "string"
+                }
             }
         }
     }
