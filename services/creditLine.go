@@ -2,12 +2,12 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Malushita08/the-credit-line/database"
 	"github.com/Malushita08/the-credit-line/models"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"net/http"
+	"time"
 )
 
 type CreditLineData struct {
@@ -33,6 +33,7 @@ func (repository *CreditLineData) GetCreditLines(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
+
 	c.JSON(http.StatusOK, creditLine)
 }
 
@@ -46,6 +47,7 @@ func (repository *CreditLineData) GetCreditLines(c *gin.Context) {
 func (repository *CreditLineData) GetCreditLine(c *gin.Context) {
 	id, _ := c.Params.Get("id")
 	var creditLine models.CreditLine
+
 	err := models.GetCreditLine(repository.DbSession, &creditLine, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -66,36 +68,64 @@ func (repository *CreditLineData) GetCreditLine(c *gin.Context) {
 // @Param creditLine body models.CreditLineRequestBody true "creditLine Data"
 // @Success 200 {object} models.CreditLine
 // @Router /creditLines [post]
-//func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
-//	var creditLine models.CreditLineRequestBody
-//	err := c.BindJSON(&creditLine)
-//	if err != nil {
-//		return
-//	}
-//	err = models.CreateCreditLine2(repository.DbSession, &creditLine)
-//	if err != nil {
-//		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
-//		return
-//	}
-//	c.JSON(http.StatusOK, creditLine)
-//}
-
+//
 func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
+	var creditLineRequestBody models.CreditLineRequestBody
 	var creditLine models.CreditLine
-	err := c.BindJSON(&creditLine)
-	//fmt.Printf("creditLine?: ", &creditLine, "\n")
-	a := float64(creditLine.RequestedCreditLine)
-	b := float64(98)
-	fmt.Printf("a?: ", a+b)
+	var lastCreditLine models.CreditLine
+	var responseBody models.ResponseBody
+
+	err := c.BindJSON(&creditLineRequestBody)
 	if err != nil {
 		return
 	}
-	err = models.CreateCreditLine(repository.DbSession, &creditLine)
+
+	//Defining our creditLine in base of the requestBody
+	timeStp, _ := time.Parse(time.RFC3339, creditLineRequestBody.RequestedDate)
+	creditLine = models.CreditLine{
+		FoundingType:        creditLineRequestBody.FoundingType,
+		CashBalance:         creditLineRequestBody.CashBalance,
+		MonthlyRevenue:      creditLineRequestBody.MonthlyRevenue,
+		RequestedCreditLine: creditLineRequestBody.RequestedCreditLine,
+		RequestedDate:       timeStp,
+	}
+
+	err = models.CreateCreditLine(repository.DbSession, &creditLine, &lastCreditLine)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	c.JSON(http.StatusOK, creditLine)
+
+	//Controlling the Date param in our requests
+	if creditLine.State == "ACCEPTED" {
+		if creditLine.AllowedRequest == true {
+			//Defining our responseBody
+			responseBody = models.ResponseBody{
+				Data:    &creditLine,
+				Message: "ACCEPTED",
+				Error:   nil,
+			}
+			c.JSON(http.StatusOK, responseBody)
+		} else {
+			responseBody = models.ResponseBody{
+				Data:    &creditLine,
+				Message: "ACCEPTED",
+				Error:   nil,
+			}
+			c.JSON(426, responseBody)
+		}
+	} else {
+		if creditLine.AllowedRequest == true {
+			responseBody = models.ResponseBody{
+				Data:    nil,
+				Message: "REJECTED CREDIT LINE REQUEST",
+				Error:   nil,
+			}
+			c.JSON(http.StatusOK, responseBody)
+		} else {
+			c.JSON(426, responseBody)
+		}
+	}
 }
 
 // UpdateCreditLine godoc
