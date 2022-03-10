@@ -16,30 +16,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/": {
-            "get": {
-                "description": "get the status of server.",
-                "consumes": [
-                    "*/*"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "root"
-                ],
-                "summary": "Show the status of server.",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/creditLines": {
             "get": {
                 "description": "get all creditLines",
@@ -75,7 +51,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreditLine"
+                            "$ref": "#/definitions/models.CreditLineRequestBody"
                         }
                     }
                 ],
@@ -114,20 +90,36 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/people": {
-            "get": {
-                "description": "get all people",
-                "tags": [
-                    "people"
-                ],
-                "summary": "Get all people",
-                "responses": {}
-            }
         }
     },
     "definitions": {
         "models.CreditLine": {
+            "type": "object",
+            "properties": {
+                "cashBalance": {
+                    "type": "number"
+                },
+                "foundingType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "monthlyRevenue": {
+                    "type": "number"
+                },
+                "recommendedCreditLine": {
+                    "type": "string"
+                },
+                "requestedCreditLine": {
+                    "type": "number"
+                },
+                "requestedDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreditLineRequestBody": {
             "type": "object",
             "properties": {
                 "cashBalance": {

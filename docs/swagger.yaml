@@ -10,6 +10,23 @@ definitions:
         type: integer
       monthlyRevenue:
         type: number
+      recommendedCreditLine:
+        type: string
+      requestedCreditLine:
+        type: number
+      requestedDate:
+        type: string
+    type: object
+  models.CreditLineRequestBody:
+    properties:
+      cashBalance:
+        type: number
+      foundingType:
+        type: string
+      id:
+        type: integer
+      monthlyRevenue:
+        type: number
       requestedCreditLine:
         type: number
       requestedDate:
@@ -22,22 +39,6 @@ info:
   title: Gin Swagger Example API
   version: "1.0"
 paths:
-  /:
-    get:
-      consumes:
-      - '*/*'
-      description: get the status of server.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Show the status of server.
-      tags:
-      - root
   /creditLines:
     get:
       description: get all creditLines
@@ -61,7 +62,7 @@ paths:
         name: creditLine
         required: true
         schema:
-          $ref: '#/definitions/models.CreditLine'
+          $ref: '#/definitions/models.CreditLineRequestBody'
       responses:
         "200":
           description: OK
@@ -87,13 +88,6 @@ paths:
       summary: Get a creditLine by id
       tags:
       - creditLine
-  /people:
-    get:
-      description: get all people
-      responses: {}
-      summary: Get all people
-      tags:
-      - people
 schemes:
 - http
 swagger: "2.0"

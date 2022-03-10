@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Malushita08/the-credit-line/database"
 	"github.com/Malushita08/the-credit-line/models"
 	"github.com/gin-gonic/gin"
@@ -62,12 +63,30 @@ func (repository *CreditLineData) GetCreditLine(c *gin.Context) {
 // @Description Create a creditLine
 // @Tags creditLine
 // @Accept json
-// @Param creditLine body models.CreditLine true "creditLine Data"
+// @Param creditLine body models.CreditLineRequestBody true "creditLine Data"
 // @Success 200 {object} models.CreditLine
 // @Router /creditLines [post]
+//func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
+//	var creditLine models.CreditLineRequestBody
+//	err := c.BindJSON(&creditLine)
+//	if err != nil {
+//		return
+//	}
+//	err = models.CreateCreditLine2(repository.DbSession, &creditLine)
+//	if err != nil {
+//		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+//		return
+//	}
+//	c.JSON(http.StatusOK, creditLine)
+//}
+
 func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 	var creditLine models.CreditLine
 	err := c.BindJSON(&creditLine)
+	//fmt.Printf("creditLine?: ", &creditLine, "\n")
+	a := float64(creditLine.RequestedCreditLine)
+	b := float64(98)
+	fmt.Printf("a?: ", a+b)
 	if err != nil {
 		return
 	}
