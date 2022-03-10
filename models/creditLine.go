@@ -95,13 +95,6 @@ func CalculateState(foundingType string, cashBalance float64, monthlyRevenue flo
 	}
 }
 
-//func GetCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error) {
-//	err = db.Where("id = ?", id).First(CreditLine).Error
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
 func ValidateTimes(state string, db *gorm.DB, LastCreditLine *CreditLine) (allowedRequest bool, err error) {
 	//Get the last request
 	//var creditLines []CreditLine
