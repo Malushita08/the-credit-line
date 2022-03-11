@@ -92,6 +92,9 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 	} else {
 		//Validate 30 seconds before the last request
 		afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
+		if CreditLine.AttemptNumber > 3 {
+			return false, errors.New("A SALES AGENT WILL CONTACT YOU")
+		}
 		if afterThirtySeconds.After(CreditLine.RequestedServerDate) {
 			return false, errors.New("WAIT 30 SEC")
 		}
