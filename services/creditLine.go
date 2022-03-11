@@ -89,7 +89,7 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 	var creditLineRequestBody models.CreditLineRequestBody
 	var creditLine models.CreditLine
 	var lastCreditLine models.CreditLine
-	var responseBody models.ResponseBody
+	var responseBody models.CreditLineResponseBody
 
 	_ = c.BindJSON(&creditLineRequestBody)
 
@@ -114,14 +114,14 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 	if creditLine.State == "ACCEPTED" {
 		if creditLine.AllowedRequest == true {
 			//Defining our responseBody
-			responseBody = models.ResponseBody{
+			responseBody = models.CreditLineResponseBody{
 				Data:    &creditLine,
 				Message: "ACCEPTED",
 				Error:   nil,
 			}
 			c.JSON(http.StatusOK, responseBody)
 		} else {
-			responseBody = models.ResponseBody{
+			responseBody = models.CreditLineResponseBody{
 				Data:    &creditLine,
 				Message: "ACCEPTED",
 				Error:   nil,
@@ -130,14 +130,14 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 		}
 	} else {
 		if creditLine.AllowedRequest == true {
-			responseBody = models.ResponseBody{
+			responseBody = models.CreditLineResponseBody{
 				Data:    nil,
 				Message: "REJECTED CREDIT LINE REQUEST",
 				Error:   nil,
 			}
 			c.JSON(http.StatusOK, responseBody)
 		} else {
-			responseBody = models.ResponseBody{
+			responseBody = models.CreditLineResponseBody{
 				Data:    &creditLine,
 				Message: "Wait 30 seconds please",
 				Error:   nil,

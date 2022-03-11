@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"math"
 	"strings"
@@ -85,22 +86,37 @@ func CalculateAttemptNumber(CreditLine *CreditLine, db *gorm.DB) (attemptNumber 
 }
 
 func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLine) (bool, error) {
-	//Get the last request
-	allowedRequest := true
-	_ = db.Last(lastCreditLine).Error
-	if CreditLine.State == "ACCEPTED" {
+	//Validate the attempt number
+	if CreditLine.AttemptNumber == 1 {
+		return true, nil
 	} else {
-		//Validate 30 seconds before the last request
-		afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
-		if CreditLine.AttemptNumber > 3 {
-			return false, errors.New("A SALES AGENT WILL CONTACT YOU")
-		}
-		if afterThirtySeconds.After(CreditLine.RequestedServerDate) {
-			return false, errors.New("WAIT 30 SEC")
+		//Get the last request
+		_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Last(lastCreditLine).Error
+
+		//Validate the last creditLine state
+		if lastCreditLine.State == "ACCEPTED" {
+			//Validate not more than 3 request within 2 minutes
+			afterTwoMinutes := lastCreditLine.RequestedServerDate.Add(time.Minute * 2)
+			if CreditLine.AttemptNumber > 3 && afterTwoMinutes.After(CreditLine.RequestedServerDate) {
+				return false, errors.New("CONGRATULATIONS!!")
+			}
+			return false, errors.New("CONGRATULATIONS YOU'VE HAD AN APPROVED CREDIT LINE!!")
+		} else {
+			//Validate 30 seconds before the last request
+			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
+			fmt.Printf("attempt", CreditLine.AttemptNumber)
+			fmt.Printf("seconds", CreditLine.RequestedServerDate)
+			fmt.Printf("30seconds", afterThirtySeconds)
+			if CreditLine.RequestedServerDate.Before(afterThirtySeconds) {
+				return false, errors.New("WAIT 30 SEC")
+			} else {
+				if CreditLine.AttemptNumber <= 3 {
+					return true, nil
+				}
+				return false, errors.New("A SALES AGENT WILL CONTACT YOU")
+			}
 		}
 	}
-	//fmt.Printf("err2", err)
-	return allowedRequest, nil
 }
 
 func UpdateCreditLine(db *gorm.DB, CreditLine *CreditLine) (err error) {
@@ -122,7 +138,7 @@ type CreditLineRequestBody struct {
 	RequestedDate       string  `bson:"requestedDate" json:"requestedDate"`
 }
 
-type ResponseBody struct {
+type CreditLineResponseBody struct {
 	Data    *CreditLine `bson:"data" json:"data"`
 	Error   *string     `bson:"error" json:"error"`
 	Message string      `bson:"message" json:"message"`
