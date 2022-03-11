@@ -20,6 +20,7 @@ type CreditLine struct {
 	RecommendedCreditLine float64   `bson:"recommendedCreditLine" json:"recommendedCreditLine"`
 	State                 string    `bson:"state" json:"state"`
 	AllowedRequest        bool      `bson:"allowedRequest" json:"allowedRequest"`
+	AttemptNumber         int64     `bson:"attemptNumber" json:"attemptNumber"`
 }
 
 func GetCreditLines(db *gorm.DB, CreditLines *[]CreditLine) (err error) {
@@ -38,8 +39,8 @@ func GetCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error) {
 	return nil
 }
 
-func GetCreditLineByFoundingName(db *gorm.DB, CreditLine *CreditLine, foundingName string) (err error) {
-	err = db.Where("founding_name = ?", foundingName).First(CreditLine).Error
+func GetCreditLineByFoundingName(db *gorm.DB, CreditLines *[]CreditLine, foundingName string) (err error) {
+	err = db.Where("founding_name = ?", foundingName).Find(CreditLines).Error
 	if err != nil {
 		return err
 	}
@@ -47,13 +48,10 @@ func GetCreditLineByFoundingName(db *gorm.DB, CreditLine *CreditLine, foundingNa
 }
 
 func CreateCreditLine(db *gorm.DB, CreditLine *CreditLine, LastCreditLine *CreditLine) (err error) {
+	//Complete and calculate not requested data
 	CreditLine.RequestedServerDate = time.Now()
-
-	CreditLine.RecommendedCreditLine, CreditLine.State = CalculateState(
-		CreditLine.FoundingType,
-		CreditLine.CashBalance,
-		CreditLine.MonthlyRevenue,
-		CreditLine.RequestedCreditLine)
+	CreditLine.RecommendedCreditLine, CreditLine.State = CalculateRecommendedCreditLineAndState(CreditLine)
+	CreditLine.AttemptNumber, _ = CalculateAttemptNumber(CreditLine, db)
 
 	//lastCreditLine :=
 	CreditLine.AllowedRequest, err = ValidateTimes(CreditLine, db, LastCreditLine)
@@ -67,27 +65,30 @@ func CreateCreditLine(db *gorm.DB, CreditLine *CreditLine, LastCreditLine *Credi
 	return nil
 }
 
-func CalculateState(foundingType string, cashBalance float64, monthlyRevenue float64, requestedCreditLine float64) (recommendedCreditLine float64, state string) {
-	if strings.ToUpper(foundingType) == "SME" {
-		recommendedCreditLine = monthlyRevenue / 5
+func CalculateRecommendedCreditLineAndState(CreditLine *CreditLine) (recommendedCreditLine float64, state string) {
+	if strings.ToUpper(CreditLine.FoundingType) == "SME" {
+		recommendedCreditLine = CreditLine.MonthlyRevenue / 5
 	}
-	if strings.ToUpper(foundingType) == "STARTUP" {
-		recommendedCreditLine = math.Max(cashBalance/3, monthlyRevenue/5)
+	if strings.ToUpper(CreditLine.FoundingType) == "STARTUP" {
+		recommendedCreditLine = math.Max(CreditLine.CashBalance/3, CreditLine.MonthlyRevenue/5)
 	}
-	if recommendedCreditLine > requestedCreditLine {
+	if recommendedCreditLine > CreditLine.RequestedCreditLine {
 		return recommendedCreditLine, "ACCEPTED"
 	} else {
 		return recommendedCreditLine, "REJECTED"
 	}
 }
 
+func CalculateAttemptNumber(CreditLine *CreditLine, db *gorm.DB) (attemptNumber int64, err error) {
+	_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Count(&attemptNumber).Error
+	return attemptNumber + 1, nil
+}
+
 func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLine) (bool, error) {
 	//Get the last request
 	allowedRequest := true
 	_ = db.Last(lastCreditLine).Error
-
 	if CreditLine.State == "ACCEPTED" {
-
 	} else {
 		//Validate 30 seconds before the last request
 		afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)

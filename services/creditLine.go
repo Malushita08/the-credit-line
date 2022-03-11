@@ -62,7 +62,7 @@ func (repository *CreditLineData) GetCreditLine(c *gin.Context) {
 
 func (repository *CreditLineData) GetCreditLineByFoundingName(c *gin.Context) {
 	foundingName, _ := c.Params.Get("foundingName")
-	var creditLine models.CreditLine
+	var creditLine []models.CreditLine
 
 	err := models.GetCreditLineByFoundingName(repository.DbSession, &creditLine, foundingName)
 	if err != nil {
