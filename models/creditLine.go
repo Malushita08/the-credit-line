@@ -38,6 +38,14 @@ func GetCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error) {
 	return nil
 }
 
+func GetCreditLineByFoundingName(db *gorm.DB, CreditLine *CreditLine, foundingName string) (err error) {
+	err = db.Where("founding_name = ?", foundingName).First(CreditLine).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func CreateCreditLine(db *gorm.DB, CreditLine *CreditLine, LastCreditLine *CreditLine) (err error) {
 	CreditLine.RequestedServerDate = time.Now()
 

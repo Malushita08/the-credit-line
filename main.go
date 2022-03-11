@@ -33,6 +33,7 @@ func main() {
 	// Routes
 	r.GET("/creditLines/", creditLine.GetCreditLines)
 	r.GET("/creditLines/:id", creditLine.GetCreditLine)
+	r.GET("/creditLines/foundingName/:foundingName", creditLine.GetCreditLineByFoundingName)
 	r.POST("/creditLines/", creditLine.CreateCreditLine)
 	r.PUT("/creditLines/:id", creditLine.UpdateCreditLine)
 	r.DELETE("/creditLines/:id", creditLine.DeleteCreditLine)

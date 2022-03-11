@@ -60,6 +60,22 @@ func (repository *CreditLineData) GetCreditLine(c *gin.Context) {
 	c.JSON(http.StatusOK, creditLine)
 }
 
+func (repository *CreditLineData) GetCreditLineByFoundingName(c *gin.Context) {
+	foundingName, _ := c.Params.Get("foundingName")
+	var creditLine models.CreditLine
+
+	err := models.GetCreditLineByFoundingName(repository.DbSession, &creditLine, foundingName)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, creditLine)
+}
+
 // CreateCreditLine godoc
 // @Summary Create a creditLine
 // @Description Create a creditLine
@@ -81,6 +97,7 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 	timeStp, _ := time.Parse(time.RFC3339, creditLineRequestBody.RequestedDate)
 	creditLine = models.CreditLine{
 		FoundingType:        creditLineRequestBody.FoundingType,
+		FoundingName:        creditLineRequestBody.FoundingName,
 		CashBalance:         creditLineRequestBody.CashBalance,
 		MonthlyRevenue:      creditLineRequestBody.MonthlyRevenue,
 		RequestedCreditLine: creditLineRequestBody.RequestedCreditLine,
