@@ -75,10 +75,7 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 	var lastCreditLine models.CreditLine
 	var responseBody models.ResponseBody
 
-	err := c.BindJSON(&creditLineRequestBody)
-	if err != nil {
-		return
-	}
+	_ = c.BindJSON(&creditLineRequestBody)
 
 	//Defining our creditLine in base of the requestBody
 	timeStp, _ := time.Parse(time.RFC3339, creditLineRequestBody.RequestedDate)
@@ -90,9 +87,9 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 		RequestedDate:       timeStp,
 	}
 
-	err = models.CreateCreditLine(repository.DbSession, &creditLine, &lastCreditLine)
+	err := models.CreateCreditLine(repository.DbSession, &creditLine, &lastCreditLine)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -123,6 +120,12 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 			}
 			c.JSON(http.StatusOK, responseBody)
 		} else {
+			responseBody = models.ResponseBody{
+				Data:    &creditLine,
+				Message: "Wait 30 seconds please",
+				Error:   nil,
+			}
+			//c.AbortWithStatusJSON(426, gin.H{"error": "time?"})
 			c.JSON(426, responseBody)
 		}
 	}

@@ -9,3 +9,6 @@ but if you want to set a local one I didi it with my sql to, you hac¿ve todo to
 variables
 
 Finally you have to go to your postman or favorite application and start trying the end point
+
+
+No olvides cambiar el tiempo a 30 segundos
