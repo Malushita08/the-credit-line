@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"github.com/jinzhu/gorm"
 	"math"
 	"strings"
@@ -22,6 +21,7 @@ type CreditLine struct {
 	State                 string    `bson:"state" json:"state"`
 	AllowedRequest        bool      `bson:"allowedRequest" json:"allowedRequest"`
 	AttemptNumber         int64     `bson:"attemptNumber" json:"attemptNumber"`
+	AttemptAcceptedNumber int64     `bson:"attemptAcceptedNumber" json:"attemptAcceptedNumber"`
 }
 
 func GetCreditLines(db *gorm.DB, CreditLines *[]CreditLine) (err error) {
@@ -40,7 +40,7 @@ func GetCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error) {
 	return nil
 }
 
-func GetCreditLineByFoundingName(db *gorm.DB, CreditLines *[]CreditLine, foundingName string) (err error) {
+func GetCreditLinesByFoundingName(db *gorm.DB, CreditLines *[]CreditLine, foundingName string) (err error) {
 	err = db.Where("founding_name = ?", foundingName).Find(CreditLines).Error
 	if err != nil {
 		return err
@@ -87,26 +87,21 @@ func CalculateAttemptNumber(CreditLine *CreditLine, db *gorm.DB) (attemptNumber 
 
 func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLine) (bool, error) {
 	//Validate the attempt number
-	if CreditLine.AttemptNumber == 1 {
-		return true, nil
-	} else {
+	if CreditLine.AttemptNumber > 1 {
 		//Get the last request
 		_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Last(lastCreditLine).Error
 
 		//Validate the last creditLine state
 		if lastCreditLine.State == "ACCEPTED" {
 			//Validate not more than 3 request within 2 minutes
-			afterTwoMinutes := lastCreditLine.RequestedServerDate.Add(time.Minute * 2)
+			afterTwoMinutes := lastCreditLine.RequestedServerDate.Add(time.Second * 2)
 			if CreditLine.AttemptNumber > 3 && afterTwoMinutes.After(CreditLine.RequestedServerDate) {
 				return false, errors.New("CONGRATULATIONS!!")
 			}
-			return false, errors.New("CONGRATULATIONS YOU'VE HAD AN APPROVED CREDIT LINE!!")
+			return true, errors.New("CONGRATULATIONS!! YOU ALREADY HAVE AN APPROVED CREDIT LINE")
 		} else {
 			//Validate 30 seconds before the last request
 			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
-			fmt.Printf("attempt", CreditLine.AttemptNumber)
-			fmt.Printf("seconds", CreditLine.RequestedServerDate)
-			fmt.Printf("30seconds", afterThirtySeconds)
 			if CreditLine.RequestedServerDate.Before(afterThirtySeconds) {
 				return false, errors.New("WAIT 30 SEC")
 			} else {
@@ -117,6 +112,7 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 			}
 		}
 	}
+	return true, nil
 }
 
 func UpdateCreditLine(db *gorm.DB, CreditLine *CreditLine) (err error) {
@@ -140,6 +136,6 @@ type CreditLineRequestBody struct {
 
 type CreditLineResponseBody struct {
 	Data    *CreditLine `bson:"data" json:"data"`
-	Error   *string     `bson:"error" json:"error"`
 	Message string      `bson:"message" json:"message"`
+	Error   *string     `bson:"error" json:"error"`
 }

@@ -33,7 +33,6 @@ func (repository *CreditLineData) GetCreditLines(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-
 	c.JSON(http.StatusOK, creditLine)
 }
 
@@ -64,7 +63,7 @@ func (repository *CreditLineData) GetCreditLineByFoundingName(c *gin.Context) {
 	foundingName, _ := c.Params.Get("foundingName")
 	var creditLine []models.CreditLine
 
-	err := models.GetCreditLineByFoundingName(repository.DbSession, &creditLine, foundingName)
+	err := models.GetCreditLinesByFoundingName(repository.DbSession, &creditLine, foundingName)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -93,7 +92,7 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 
 	_ = c.BindJSON(&creditLineRequestBody)
 
-	//Defining our creditLine in base of the requestBody
+	//Defining our creditLine based in the requestBody
 	timeStp, _ := time.Parse(time.RFC3339, creditLineRequestBody.RequestedDate)
 	creditLine = models.CreditLine{
 		FoundingType:        creditLineRequestBody.FoundingType,
@@ -106,7 +105,17 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 
 	err := models.CreateCreditLine(repository.DbSession, &creditLine, &lastCreditLine)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		responseBody = models.CreditLineResponseBody{
+			Data:    nil,
+			Message: err.Error(),
+			Error:   nil,
+		}
+		if creditLine.AllowedRequest == false {
+			c.AbortWithStatusJSON(426, responseBody)
+			return
+		}
+		//c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, responseBody)
 		return
 	}
 
@@ -146,38 +155,4 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 			c.JSON(426, responseBody)
 		}
 	}
-}
-
-// UpdateCreditLine godoc
-func (repository *CreditLineData) UpdateCreditLine(c *gin.Context) {
-	var creditLine models.CreditLine
-	id, _ := c.Params.Get("id")
-	err := models.GetCreditLine(repository.DbSession, &creditLine, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.AbortWithStatus(http.StatusNotFound)
-			return
-		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
-	}
-	c.BindJSON(&creditLine)
-	err = models.UpdateCreditLine(repository.DbSession, &creditLine)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
-	}
-	c.JSON(http.StatusOK, creditLine)
-}
-
-// delete book
-func (repository *CreditLineData) DeleteCreditLine(c *gin.Context) {
-	var book models.CreditLine
-	id, _ := c.Params.Get("id")
-	err := models.DeleteCreditLine(repository.DbSession, &book, id)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "CreditLine deleted successfully"})
 }

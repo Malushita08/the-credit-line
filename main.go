@@ -25,9 +25,10 @@ func main() {
 		return
 	}
 
-	// Gin instance
+	//Gin instance
 	r := gin.Default()
 
+	//CreditLine instance
 	creditLine := services.NewCreditLine()
 
 	// Routes
@@ -35,14 +36,12 @@ func main() {
 	r.GET("/creditLines/:id", creditLine.GetCreditLine)
 	r.GET("/creditLines/foundingName/:foundingName", creditLine.GetCreditLineByFoundingName)
 	r.POST("/creditLines/", creditLine.CreateCreditLine)
-	r.PUT("/creditLines/:id", creditLine.UpdateCreditLine)
-	r.DELETE("/creditLines/:id", creditLine.DeleteCreditLine)
 
 	// Swagger documentation
 	url := ginSwagger.URL("http://localhost:8080/swagger/doc.json") // The url pointing to API definition
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
-	// Start server
+	//Start server
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}
