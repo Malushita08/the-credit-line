@@ -49,12 +49,6 @@ func GetCreditLinesByFoundingName(db *gorm.DB, CreditLines *[]CreditLine, foundi
 }
 
 func CreateCreditLine(db *gorm.DB, CreditLine *CreditLine, LastCreditLine *CreditLine) (err error) {
-	//Complete and calculate not requested data
-	CreditLine.RequestedServerDate = time.Now()
-	CreditLine.RecommendedCreditLine, CreditLine.State = CalculateRecommendedCreditLineAndState(CreditLine)
-	CreditLine.AttemptNumber, _ = CalculateAttemptNumber(CreditLine, db)
-
-	//lastCreditLine :=
 	CreditLine.AllowedRequest, err = ValidateTimes(CreditLine, db, LastCreditLine)
 	if err != nil {
 		return err
@@ -64,25 +58,6 @@ func CreateCreditLine(db *gorm.DB, CreditLine *CreditLine, LastCreditLine *Credi
 		return err
 	}
 	return nil
-}
-
-func CalculateRecommendedCreditLineAndState(CreditLine *CreditLine) (recommendedCreditLine float64, state string) {
-	if strings.ToUpper(CreditLine.FoundingType) == "SME" {
-		recommendedCreditLine = CreditLine.MonthlyRevenue / 5
-	}
-	if strings.ToUpper(CreditLine.FoundingType) == "STARTUP" {
-		recommendedCreditLine = math.Max(CreditLine.CashBalance/3, CreditLine.MonthlyRevenue/5)
-	}
-	if recommendedCreditLine > CreditLine.RequestedCreditLine {
-		return recommendedCreditLine, "ACCEPTED"
-	} else {
-		return recommendedCreditLine, "REJECTED"
-	}
-}
-
-func CalculateAttemptNumber(CreditLine *CreditLine, db *gorm.DB) (attemptNumber int64, err error) {
-	_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Count(&attemptNumber).Error
-	return attemptNumber + 1, nil
 }
 
 func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLine) (bool, error) {
@@ -108,7 +83,7 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 				if CreditLine.AttemptNumber <= 3 {
 					return true, nil
 				}
-				return false, errors.New("A SALES AGENT WILL CONTACT YOU")
+				return true, errors.New("A SALES AGENT WILL CONTACT YOU")
 			}
 		}
 	}
@@ -125,6 +100,55 @@ func DeleteCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error
 	return nil
 }
 
+func CalculateNotRequestedData(CreditLine *CreditLine, db *gorm.DB) (err error) {
+	//Calculate recommendedCreditLine
+	if strings.ToUpper(CreditLine.FoundingType) == "SME" {
+		CreditLine.RecommendedCreditLine = CreditLine.MonthlyRevenue / 5
+	}
+	if strings.ToUpper(CreditLine.FoundingType) == "STARTUP" {
+		CreditLine.RecommendedCreditLine = math.Max(CreditLine.CashBalance/3, CreditLine.MonthlyRevenue/5)
+	}
+	//Calculate state
+	if CreditLine.RecommendedCreditLine > CreditLine.RequestedCreditLine {
+		CreditLine.State = "ACCEPTED"
+	} else {
+		CreditLine.State = "REJECTED"
+	}
+	//Calculate attemptNumber
+	attemptNumber := int64(0)
+	_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Count(&attemptNumber).Error
+	CreditLine.AttemptNumber = attemptNumber + 1
+	return nil
+}
+
+func DefineCreditLine(db *gorm.DB, creditLineRequestBody *CreditLineRequestBody, creditLine *CreditLine) (err error) {
+	timeStp, _ := time.Parse(time.RFC3339, creditLineRequestBody.RequestedDate)
+	if err != nil {
+		return err
+	}
+	creditLine.FoundingType = creditLineRequestBody.FoundingType
+	creditLine.FoundingName = creditLineRequestBody.FoundingName
+	creditLine.CashBalance = creditLineRequestBody.CashBalance
+	creditLine.MonthlyRevenue = creditLineRequestBody.MonthlyRevenue
+	creditLine.RequestedCreditLine = creditLineRequestBody.RequestedCreditLine
+	creditLine.RequestedDate = timeStp
+	creditLine.RequestedServerDate = time.Now()
+	_ = CalculateNotRequestedData(creditLine, db)
+	return nil
+}
+
+func DefineCreditLineResponseBody(creditLine *CreditLine, creditLineResponseBody *CreditLineResponseBody) (err error) {
+	creditLineResponseBody.FoundingType = creditLine.FoundingType
+	creditLineResponseBody.FoundingName = creditLine.FoundingName
+	creditLineResponseBody.CashBalance = creditLine.CashBalance
+	creditLineResponseBody.MonthlyRevenue = creditLine.MonthlyRevenue
+	creditLineResponseBody.RequestedCreditLine = creditLine.RequestedCreditLine
+	creditLineResponseBody.RequestedDate = creditLine.RequestedDate
+	creditLineResponseBody.RequestedServerDate = creditLine.RequestedServerDate
+	creditLineResponseBody.RecommendedCreditLine = creditLine.RecommendedCreditLine
+	return nil
+}
+
 type CreditLineRequestBody struct {
 	FoundingType        string  `bson:"foundingType" json:"foundingType"`
 	FoundingName        string  `bson:"foundingName" json:"foundingName"`
@@ -135,7 +159,18 @@ type CreditLineRequestBody struct {
 }
 
 type CreditLineResponseBody struct {
-	Data    *CreditLine `bson:"data" json:"data"`
-	Message string      `bson:"message" json:"message"`
-	Error   *string     `bson:"error" json:"error"`
+	FoundingType          string    `bson:"foundingType" json:"foundingType"`
+	FoundingName          string    `bson:"foundingName" json:"foundingName"`
+	CashBalance           float64   `bson:"cashBalance" json:"cashBalance"`
+	MonthlyRevenue        float64   `bson:"monthlyRevenue" json:"monthlyRevenue"`
+	RequestedCreditLine   float64   `bson:"requestedCreditLine" json:"requestedCreditLine"`
+	RequestedDate         time.Time `bson:"requestedDate" json:"requestedDate"`
+	RequestedServerDate   time.Time `bson:"requestedServerDate" json:"requestedServerDate"`
+	RecommendedCreditLine float64   `bson:"recommendedCreditLine" json:"recommendedCreditLine"`
+}
+
+type ResponseBody struct {
+	Data    *CreditLineResponseBody `bson:"data" json:"data"`
+	Message string                  `bson:"message" json:"message"`
+	Error   *string                 `bson:"error" json:"error"`
 }
