@@ -64,26 +64,26 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 	//Validate the attempt number
 	if CreditLine.AttemptNumber > 1 {
 		//Get the last request
-		_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Last(lastCreditLine).Error
+		_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Last(&lastCreditLine).Error
 
 		//Validate the last creditLine state
 		if lastCreditLine.State == "ACCEPTED" {
 			//Validate not more than 3 request within 2 minutes
 			afterTwoMinutes := lastCreditLine.RequestedServerDate.Add(time.Second * 2)
 			if CreditLine.AttemptNumber > 3 && afterTwoMinutes.After(CreditLine.RequestedServerDate) {
-				return false, errors.New("CONGRATULATIONS!!")
+				return true, errors.New("Wait 2 minutes please!!")
 			}
-			return true, errors.New("CONGRATULATIONS!! YOU ALREADY HAVE AN APPROVED CREDIT LINE")
+			return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
 		} else {
 			//Validate 30 seconds before the last request
 			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
 			if CreditLine.RequestedServerDate.Before(afterThirtySeconds) {
-				return false, errors.New("WAIT 30 SEC")
+				return false, errors.New("Wait 30 seconds please")
 			} else {
 				if CreditLine.AttemptNumber <= 3 {
 					return true, nil
 				}
-				return true, errors.New("A SALES AGENT WILL CONTACT YOU")
+				return true, errors.New("A sales agent will contact you")
 			}
 		}
 	}
@@ -170,7 +170,7 @@ type CreditLineResponseBody struct {
 }
 
 type ResponseBody struct {
-	Data    *CreditLineResponseBody `bson:"data" json:"data"`
 	Message string                  `bson:"message" json:"message"`
+	Data    *CreditLineResponseBody `bson:"data" json:"data"`
 	Error   *string                 `bson:"error" json:"error"`
 }

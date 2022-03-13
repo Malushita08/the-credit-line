@@ -97,17 +97,25 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	_ = models.DefineCreditLineResponseBody(&creditLine, &creditLineResponseBody)
-
+	//_ = models.DefineCreditLineResponseBody(&creditLine, &creditLineResponseBody)
 	//Create the creditLine
 	err = models.CreateCreditLine(repository.DbSession, &creditLine, &lastCreditLine)
 	if err != nil {
 		responseBody = models.ResponseBody{
-			Data: &creditLineResponseBody, Message: err.Error(), Error: nil,
-		}
+			Message: err.Error(),
+			Data:    &creditLineResponseBody,
+			Error:   nil}
+
 		if creditLine.AllowedRequest == false {
+			if responseBody.Message == "Wait 30 seconds please" {
+				responseBody.Data = nil
+			}
 			c.AbortWithStatusJSON(426, responseBody)
 			return
+		}
+		_ = models.DefineCreditLineResponseBody(&lastCreditLine, &creditLineResponseBody)
+		if responseBody.Message == "A sales agent will contact you" {
+			responseBody.Data = nil
 		}
 		c.AbortWithStatusJSON(200, responseBody)
 		return
@@ -115,6 +123,7 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 
 	//Controlling the Date param in our requests
 	if creditLine.State == "ACCEPTED" {
+		//_ = models.DefineCreditLineResponseBody(&lastCreditLine, &creditLineResponseBody)
 		if creditLine.AllowedRequest == true {
 			//Defining our responseBody
 			responseBody = models.ResponseBody{
@@ -130,12 +139,12 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 	} else {
 		if creditLine.AllowedRequest == true {
 			responseBody = models.ResponseBody{
-				Data: nil, Message: "REJECTED CREDIT LINE REQUEST", Error: nil,
-			}
+				Data: nil, Message: "Rejected credit line request", Error: nil}
 			c.JSON(http.StatusOK, responseBody)
 		} else {
 			responseBody = models.ResponseBody{
-				Data: &creditLineResponseBody, Message: "Wait 30 seconds please", Error: nil,
+				//Data: &creditLineResponseBody, Message: "Wait 30 seconds please", Error: nil,
+				Data: nil, Message: "Wait 30 seconds please", Error: nil,
 			}
 			//c.AbortWithStatusJSON(426, gin.H{"error": "time?"})
 			c.JSON(426, responseBody)
