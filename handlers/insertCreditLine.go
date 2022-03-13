@@ -25,7 +25,7 @@ func InsertCreditLine(db database.CreditLineInterface) gin.HandlerFunc {
 		}
 		responseBody, err := db.CreateCreditLine(creditLineRequestBody)
 		if err != nil {
-			if responseBody.Message == "Please, wait 30 seconds" || responseBody.Message == "You've done more than 3 request within 2 minutes" {
+			if responseBody.Message == "Please, wait 30 seconds" || responseBody.Message == "You've done more than 3 request within the last 2 minutes" {
 				c.AbortWithStatusJSON(426, responseBody)
 				return
 			}
