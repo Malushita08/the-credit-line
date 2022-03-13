@@ -107,7 +107,7 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 			Error:   nil}
 
 		if creditLine.AllowedRequest == false {
-			if responseBody.Message == "Wait 30 seconds please" {
+			if responseBody.Message == "Please, wait 30 seconds" {
 				responseBody.Data = nil
 			}
 			c.AbortWithStatusJSON(426, responseBody)
@@ -123,31 +123,21 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 
 	//Controlling the Date param in our requests
 	if creditLine.State == "ACCEPTED" {
-		//_ = models.DefineCreditLineResponseBody(&lastCreditLine, &creditLineResponseBody)
+		_ = models.DefineCreditLineResponseBody(&creditLine, &creditLineResponseBody)
 		if creditLine.AllowedRequest == true {
 			//Defining our responseBody
 			responseBody = models.ResponseBody{
-				Data: &creditLineResponseBody, Message: "ACCEPTED", Error: nil,
+				Data:    &creditLineResponseBody,
+				Message: "ACCEPTED",
+				Error:   nil,
 			}
 			c.JSON(http.StatusOK, responseBody)
-		} else {
-			responseBody = models.ResponseBody{
-				Data: &creditLineResponseBody, Message: "ACCEPTED", Error: nil,
-			}
-			c.JSON(426, responseBody)
 		}
 	} else {
 		if creditLine.AllowedRequest == true {
 			responseBody = models.ResponseBody{
 				Data: nil, Message: "Rejected credit line request", Error: nil}
 			c.JSON(http.StatusOK, responseBody)
-		} else {
-			responseBody = models.ResponseBody{
-				//Data: &creditLineResponseBody, Message: "Wait 30 seconds please", Error: nil,
-				Data: nil, Message: "Wait 30 seconds please", Error: nil,
-			}
-			//c.AbortWithStatusJSON(426, gin.H{"error": "time?"})
-			c.JSON(426, responseBody)
 		}
 	}
 }
