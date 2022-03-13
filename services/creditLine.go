@@ -107,7 +107,7 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 			Error:   nil}
 
 		if creditLine.AllowedRequest == false {
-			if responseBody.Message == "Please, wait 30 seconds" || responseBody.Message == "Please, wait two minutes" {
+			if responseBody.Message == "Please, wait 30 seconds" || responseBody.Message == "You've done more than 3 request within 2 minutes" {
 				responseBody.Data = nil
 			}
 			c.AbortWithStatusJSON(426, responseBody)

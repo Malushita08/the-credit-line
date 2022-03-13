@@ -9,7 +9,32 @@ import (
 )
 
 type CreditLine struct {
-	ID                    uint      `bson:"_id,omitempty" json:"id,omitempty"`
+	ID                      uint      `bson:"_id,omitempty" json:"id,omitempty"`
+	FoundingType            string    `bson:"foundingType" json:"foundingType"`
+	FoundingName            string    `bson:"foundingName" json:"foundingName"`
+	CashBalance             float64   `bson:"cashBalance" json:"cashBalance"`
+	MonthlyRevenue          float64   `bson:"monthlyRevenue" json:"monthlyRevenue"`
+	RequestedCreditLine     float64   `bson:"requestedCreditLine" json:"requestedCreditLine"`
+	RequestedDate           time.Time `bson:"requestedDate" json:"requestedDate"`
+	RequestedServerDate     time.Time `bson:"requestedServerDate" json:"requestedServerDate"`
+	RecommendedCreditLine   float64   `bson:"recommendedCreditLine" json:"recommendedCreditLine"`
+	State                   string    `bson:"state" json:"state"`
+	AllowedRequest          bool      `bson:"allowedRequest" json:"allowedRequest"`
+	AttemptNumber           int64     `bson:"attemptNumber" json:"attemptNumber"`
+	AttemptAcceptedNumber   int64     `bson:"attemptAcceptedNumber" json:"attemptAcceptedNumber"`
+	LastAcceptedRequestDate time.Time `bson:"lastAcceptedRequestDate" json:"lastAcceptedRequestDate"`
+}
+
+type CreditLineRequestBody struct {
+	FoundingType        string  `bson:"foundingType" json:"foundingType"`
+	FoundingName        string  `bson:"foundingName" json:"foundingName"`
+	CashBalance         float64 `bson:"cashBalance" json:"cashBalance"`
+	MonthlyRevenue      float64 `bson:"monthlyRevenue" json:"monthlyRevenue"`
+	RequestedCreditLine float64 `bson:"requestedCreditLine" json:"requestedCreditLine"`
+	RequestedDate       string  `bson:"requestedDate" json:"requestedDate"`
+}
+
+type CreditLineResponseBody struct {
 	FoundingType          string    `bson:"foundingType" json:"foundingType"`
 	FoundingName          string    `bson:"foundingName" json:"foundingName"`
 	CashBalance           float64   `bson:"cashBalance" json:"cashBalance"`
@@ -18,10 +43,12 @@ type CreditLine struct {
 	RequestedDate         time.Time `bson:"requestedDate" json:"requestedDate"`
 	RequestedServerDate   time.Time `bson:"requestedServerDate" json:"requestedServerDate"`
 	RecommendedCreditLine float64   `bson:"recommendedCreditLine" json:"recommendedCreditLine"`
-	State                 string    `bson:"state" json:"state"`
-	AllowedRequest        bool      `bson:"allowedRequest" json:"allowedRequest"`
-	AttemptNumber         int64     `bson:"attemptNumber" json:"attemptNumber"`
-	AttemptAcceptedNumber int64     `bson:"attemptAcceptedNumber" json:"attemptAcceptedNumber"`
+}
+
+type ResponseBody struct {
+	Message string                  `bson:"message" json:"message"`
+	Data    *CreditLineResponseBody `bson:"data" json:"data"`
+	Error   *string                 `bson:"error" json:"error"`
 }
 
 func GetCreditLines(db *gorm.DB, CreditLines *[]CreditLine) (err error) {
@@ -68,17 +95,54 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 
 		//Validate the last creditLine state
 		if lastCreditLine.State == "ACCEPTED" {
-			lastCreditLine.AttemptAcceptedNumber++
-			db.Save(lastCreditLine)
+			//lastCreditLine.AttemptAcceptedNumber++
+			//db.Save(lastCreditLine)
 
 			//Validate not more than 3 request within 2 minutes
-			afterTwoMinutes := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
-			if lastCreditLine.AttemptAcceptedNumber >= 3 && afterTwoMinutes.Before(CreditLine.RequestedServerDate) {
-				lastCreditLine.AttemptAcceptedNumber = 0
-				db.Save(lastCreditLine)
-				return false, errors.New("Please, wait two minutes")
+			afterTwoMinutes := lastCreditLine.LastAcceptedRequestDate.Add(time.Second * 3)
+			if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
+				return false, errors.New("You've done more than 3 request within 2 minutes")
+
+				//return false, errors.New("Please, wait two minutes")
 			}
+			//if lastCreditLine.AttemptAcceptedNumber < 3 {
+			//	lastCreditLine.AttemptAcceptedNumber++
+			//	if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
+			//		return false, errors.New("Please, wait two minutes")
+			//	}
+			//	lastCreditLine.LastAcceptedRequestDate = time.Now()
+			//	//lastCreditLine.AttemptAcceptedNumber = 0
+			//	db.Save(lastCreditLine)
+			//	return false, errors.New("aaaaa")
+			//}
+			//lastCreditLine.AttemptAcceptedNumber = 0
+			lastCreditLine.LastAcceptedRequestDate = time.Now()
+			db.Save(lastCreditLine)
 			return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
+
+			//return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
+			//fmt.Printf("aaaaaa", lastCreditLine)
+			//fmt.Printf("bbbbbb", CreditLine)
+			//if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
+			//	fmt.Printf("entrororo aki")
+			//	lastCreditLine.AttemptAcceptedNumber++
+			//	//lastCreditLine.LastAcceptedRequestDate = time.Now()
+			//	db.Save(lastCreditLine)
+			//	if lastCreditLine.AttemptAcceptedNumber >= 3 {
+			//		lastCreditLine.AttemptAcceptedNumber = 0
+			//		db.Save(lastCreditLine)
+			//		//return false, errors.New("aaaa")
+			//		return false, errors.New("Please, wait two minutes")
+			//	}
+			//	//return false, errors.New("Please, wait two minutes")
+			//}
+			//if lastCreditLine.AttemptAcceptedNumber >= 3 && afterTwoMinutes.After(CreditLine.RequestedServerDate) {
+			//	lastCreditLine.AttemptAcceptedNumber = 0
+			//	db.Save(lastCreditLine)
+			//	return false, errors.New("Please, wait two minutes")
+			//}
+			//lastCreditLine.LastAcceptedRequestDate = time.Now()
+
 		} else {
 			//Validate 30 seconds before the last request
 			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
@@ -107,6 +171,7 @@ func CalculateNotRequestedData(CreditLine *CreditLine, db *gorm.DB) (err error) 
 	//Calculate state
 	if CreditLine.RecommendedCreditLine > CreditLine.RequestedCreditLine {
 		CreditLine.State = "ACCEPTED"
+		CreditLine.LastAcceptedRequestDate = time.Now()
 	} else {
 		CreditLine.State = "REJECTED"
 	}
@@ -143,30 +208,4 @@ func DefineCreditLineResponseBody(creditLine *CreditLine, creditLineResponseBody
 	creditLineResponseBody.RequestedServerDate = creditLine.RequestedServerDate
 	creditLineResponseBody.RecommendedCreditLine = creditLine.RecommendedCreditLine
 	return nil
-}
-
-type CreditLineRequestBody struct {
-	FoundingType        string  `bson:"foundingType" json:"foundingType"`
-	FoundingName        string  `bson:"foundingName" json:"foundingName"`
-	CashBalance         float64 `bson:"cashBalance" json:"cashBalance"`
-	MonthlyRevenue      float64 `bson:"monthlyRevenue" json:"monthlyRevenue"`
-	RequestedCreditLine float64 `bson:"requestedCreditLine" json:"requestedCreditLine"`
-	RequestedDate       string  `bson:"requestedDate" json:"requestedDate"`
-}
-
-type CreditLineResponseBody struct {
-	FoundingType          string    `bson:"foundingType" json:"foundingType"`
-	FoundingName          string    `bson:"foundingName" json:"foundingName"`
-	CashBalance           float64   `bson:"cashBalance" json:"cashBalance"`
-	MonthlyRevenue        float64   `bson:"monthlyRevenue" json:"monthlyRevenue"`
-	RequestedCreditLine   float64   `bson:"requestedCreditLine" json:"requestedCreditLine"`
-	RequestedDate         time.Time `bson:"requestedDate" json:"requestedDate"`
-	RequestedServerDate   time.Time `bson:"requestedServerDate" json:"requestedServerDate"`
-	RecommendedCreditLine float64   `bson:"recommendedCreditLine" json:"recommendedCreditLine"`
-}
-
-type ResponseBody struct {
-	Message string                  `bson:"message" json:"message"`
-	Data    *CreditLineResponseBody `bson:"data" json:"data"`
-	Error   *string                 `bson:"error" json:"error"`
 }
