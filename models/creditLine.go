@@ -61,7 +61,7 @@ func CreateCreditLine(db *gorm.DB, CreditLine *CreditLine, LastCreditLine *Credi
 }
 
 func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLine) (bool, error) {
-	//Validate the attempt number
+	//Validate the attemptNumber
 	if CreditLine.AttemptNumber > 1 {
 		//Get the last request
 		_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Last(&lastCreditLine).Error
@@ -76,7 +76,7 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 			if lastCreditLine.AttemptAcceptedNumber >= 3 && afterTwoMinutes.Before(CreditLine.RequestedServerDate) {
 				lastCreditLine.AttemptAcceptedNumber = 0
 				db.Save(lastCreditLine)
-				return true, errors.New("Please, wait two minutes")
+				return false, errors.New("Please, wait two minutes")
 			}
 			return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
 		} else {
