@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"github.com/Malushita08/the-credit-line/models"
 	"github.com/jinzhu/gorm"
 	"math"
@@ -9,29 +10,67 @@ import (
 )
 
 type CreditLineInterface interface {
-	CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (creditLine models.CreditLine, err error)
+	CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (creditLine models.ResponseBody, err error)
 }
 
 type CreditLineClient struct {
 	DbSession *gorm.DB
 }
 
-func (db *CreditLineClient) CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (creditLine models.CreditLine, err error) {
-	err = db.DefineCreditLine(&creditLineRequestBody, &creditLine)
-	if err != nil {
-		return models.CreditLine{}, err
+func (db *CreditLineClient) CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (responseBody models.ResponseBody, err error) {
+	creditLine := models.CreditLine{}
+	creditLineResponseBody := models.CreditLineResponseBody{}
+	_ = db.DefineCreditLine(&creditLineRequestBody, &creditLine)
+	_ = models.DefineCreditLineResponseBody(&creditLine, &creditLineResponseBody)
+	responseBody.Message = "ACCEPTED"
+	responseBody.Data = &creditLineResponseBody
+	if creditLine.State == "REJECTED" {
+		responseBody.Message = "REJECTED"
 	}
-	//CreditLine.AllowedRequest, err = ValidateTimes(CreditLine, db, LastCreditLine)
-	//if err != nil {
-	//	return err
-	//}
+
+	err = db.ValidateTimes(&creditLine)
+	if err != nil {
+		if err.Error() == "A sales agent will contact you" || err.Error() == "Please, wait 30 seconds" {
+			responseBody.Data = nil
+		}
+		responseBody.Message = err.Error()
+		return responseBody, err
+	}
 	err = db.DbSession.Create(&creditLine).Error
-	//db.Model(&CreditLine)
-	//err = db.DbSession.Model(&creditLine).Find().First(&creditLine).Error
-	//if err != nil {
-	//	return err
-	//}
-	return creditLine, nil
+	return responseBody, nil
+}
+
+func (db *CreditLineClient) ValidateTimes(CreditLine *models.CreditLine) error {
+	//Validate the attemptNumber
+	if CreditLine.AttemptNumber > 1 {
+		//Get the last request
+		lastCreditLine := models.CreditLine{}
+		_ = db.DbSession.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Last(&lastCreditLine).Error
+
+		//Validate the last creditLine state
+		if lastCreditLine.State == "ACCEPTED" {
+			//Validate not more than 3 request within 2 minutes
+			afterTwoMinutes := lastCreditLine.LastAcceptedRequestDate.Add(time.Second * 3)
+			if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
+				return errors.New("You've done more than 3 request within 2 minutes")
+			}
+			lastCreditLine.LastAcceptedRequestDate = time.Now()
+			db.DbSession.Save(lastCreditLine)
+			return errors.New("CONGRATULATIONS!! you already have an approved credit line")
+		} else {
+			//Validate 30 seconds later the last request
+			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
+			if CreditLine.RequestedServerDate.Before(afterThirtySeconds) {
+				return errors.New("Please, wait 30 seconds")
+			} else {
+				if CreditLine.AttemptNumber <= 3 {
+					return nil
+				}
+				return errors.New("A sales agent will contact you")
+			}
+		}
+	}
+	return nil
 }
 
 func (db *CreditLineClient) DefineCreditLine(creditLineRequestBody *models.CreditLineRequestBody, creditLine *models.CreditLine) (err error) {
@@ -71,89 +110,3 @@ func (db *CreditLineClient) CalculateNotRequestedData(CreditLine *models.CreditL
 	CreditLine.AttemptNumber = attemptNumber + 1
 	return nil
 }
-
-//func (db *CreditLineClient )CreateCreditLine(CreditLine *models.CreditLine, LastCreditLine *models.CreditLine) (err error) {
-//	//CreditLine.AllowedRequest, err = ValidateTimes(CreditLine, db, LastCreditLine)
-//	if err != nil {
-//		return err
-//	}
-//	err = db.DbSession.Create(CreditLine).Error
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
-//func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLine) (bool, error) {
-//	//Validate the attemptNumber
-//	if CreditLine.AttemptNumber > 1 {
-//		//Get the last request
-//		_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Last(&lastCreditLine).Error
-//
-//		//Validate the last creditLine state
-//		if lastCreditLine.State == "ACCEPTED" {
-//			//lastCreditLine.AttemptAcceptedNumber++
-//			//db.Save(lastCreditLine)
-//
-//			//Validate not more than 3 request within 2 minutes
-//			afterTwoMinutes := lastCreditLine.LastAcceptedRequestDate.Add(time.Second * 3)
-//			if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
-//				return false, errors.New("You've done more than 3 request within 2 minutes")
-//
-//				//return false, errors.New("Please, wait two minutes")
-//			}
-//			//if lastCreditLine.AttemptAcceptedNumber < 3 {
-//			//	lastCreditLine.AttemptAcceptedNumber++
-//			//	if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
-//			//		return false, errors.New("Please, wait two minutes")
-//			//	}
-//			//	lastCreditLine.LastAcceptedRequestDate = time.Now()
-//			//	//lastCreditLine.AttemptAcceptedNumber = 0
-//			//	db.Save(lastCreditLine)
-//			//	return false, errors.New("aaaaa")
-//			//}
-//			//lastCreditLine.AttemptAcceptedNumber = 0
-//			lastCreditLine.LastAcceptedRequestDate = time.Now()
-//			db.Save(lastCreditLine)
-//			return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
-//
-//			//return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
-//			//fmt.Printf("aaaaaa", lastCreditLine)
-//			//fmt.Printf("bbbbbb", CreditLine)
-//			//if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
-//			//	fmt.Printf("entrororo aki")
-//			//	lastCreditLine.AttemptAcceptedNumber++
-//			//	//lastCreditLine.LastAcceptedRequestDate = time.Now()
-//			//	db.Save(lastCreditLine)
-//			//	if lastCreditLine.AttemptAcceptedNumber >= 3 {
-//			//		lastCreditLine.AttemptAcceptedNumber = 0
-//			//		db.Save(lastCreditLine)
-//			//		//return false, errors.New("aaaa")
-//			//		return false, errors.New("Please, wait two minutes")
-//			//	}
-//			//	//return false, errors.New("Please, wait two minutes")
-//			//}
-//			//if lastCreditLine.AttemptAcceptedNumber >= 3 && afterTwoMinutes.After(CreditLine.RequestedServerDate) {
-//			//	lastCreditLine.AttemptAcceptedNumber = 0
-//			//	db.Save(lastCreditLine)
-//			//	return false, errors.New("Please, wait two minutes")
-//			//}
-//			//lastCreditLine.LastAcceptedRequestDate = time.Now()
-//
-//		} else {
-//			//Validate 30 seconds before the last request
-//			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
-//
-//			if CreditLine.RequestedServerDate.Before(afterThirtySeconds) {
-//				return false, errors.New("Please, wait 30 seconds")
-//			} else {
-//				if CreditLine.AttemptNumber <= 3 {
-//					return true, nil
-//				}
-//				return true, errors.New("A sales agent will contact you")
-//			}
-//		}
-//	}
-//	return true, nil
-//}
-//

@@ -3,8 +3,6 @@ package models
 import (
 	"errors"
 	"github.com/jinzhu/gorm"
-	"math"
-	"strings"
 	"time"
 )
 
@@ -158,44 +156,6 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 		}
 	}
 	return true, nil
-}
-
-func CalculateNotRequestedData(CreditLine *CreditLine, db *gorm.DB) (err error) {
-	//Calculate recommendedCreditLine
-	if strings.ToUpper(CreditLine.FoundingType) == "SME" {
-		CreditLine.RecommendedCreditLine = CreditLine.MonthlyRevenue / 5
-	}
-	if strings.ToUpper(CreditLine.FoundingType) == "STARTUP" {
-		CreditLine.RecommendedCreditLine = math.Max(CreditLine.CashBalance/3, CreditLine.MonthlyRevenue/5)
-	}
-	//Calculate state
-	if CreditLine.RecommendedCreditLine > CreditLine.RequestedCreditLine {
-		CreditLine.State = "ACCEPTED"
-		CreditLine.LastAcceptedRequestDate = time.Now()
-	} else {
-		CreditLine.State = "REJECTED"
-	}
-	//Calculate attemptNumber
-	attemptNumber := int64(0)
-	_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Count(&attemptNumber).Error
-	CreditLine.AttemptNumber = attemptNumber + 1
-	return nil
-}
-
-func DefineCreditLine(db *gorm.DB, creditLineRequestBody *CreditLineRequestBody, creditLine *CreditLine) (err error) {
-	timeStp, _ := time.Parse(time.RFC3339, creditLineRequestBody.RequestedDate)
-	if err != nil {
-		return err
-	}
-	creditLine.FoundingType = creditLineRequestBody.FoundingType
-	creditLine.FoundingName = creditLineRequestBody.FoundingName
-	creditLine.CashBalance = creditLineRequestBody.CashBalance
-	creditLine.MonthlyRevenue = creditLineRequestBody.MonthlyRevenue
-	creditLine.RequestedCreditLine = creditLineRequestBody.RequestedCreditLine
-	creditLine.RequestedDate = timeStp
-	creditLine.RequestedServerDate = time.Now()
-	_ = CalculateNotRequestedData(creditLine, db)
-	return nil
 }
 
 func DefineCreditLineResponseBody(creditLine *CreditLine, creditLineResponseBody *CreditLineResponseBody) (err error) {

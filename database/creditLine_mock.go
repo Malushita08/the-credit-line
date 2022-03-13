@@ -10,9 +10,9 @@ type MockCreditLineClient struct {
 	mock.Mock
 }
 
-func (m *MockCreditLineClient) CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (creditLine models.CreditLine, err error) {
+func (m *MockCreditLineClient) CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (creditLine models.ResponseBody, err error) {
 	args := m.Called(creditLineRequestBody)
-	return args.Get(0).(models.CreditLine), args.Error(1)
+	return args.Get(0).(models.ResponseBody), args.Error(1)
 }
 
 //func (m *MockTodoClient) Update(id string, update interface{}) (models.TodoUpdate, error) {
