@@ -21,7 +21,7 @@ func (db *CreditLineClient) CreateCreditLine(creditLineRequestBody models.Credit
 	creditLine := models.CreditLine{}
 	creditLineResponseBody := models.CreditLineResponseBody{}
 	_ = db.DefineCreditLine(&creditLineRequestBody, &creditLine)
-	_ = models.DefineCreditLineResponseBody(&creditLine, &creditLineResponseBody)
+	_ = db.DefineCreditLineResponseBody(&creditLine, &creditLineResponseBody)
 	responseBody.Message = "ACCEPTED"
 	responseBody.Data = &creditLineResponseBody
 	if creditLine.State == "REJECTED" {
@@ -73,6 +73,17 @@ func (db *CreditLineClient) ValidateTimes(CreditLine *models.CreditLine) error {
 	return nil
 }
 
+func (db *CreditLineClient) DefineCreditLineResponseBody(creditLine *models.CreditLine, creditLineResponseBody *models.CreditLineResponseBody) (err error) {
+	creditLineResponseBody.FoundingType = creditLine.FoundingType
+	creditLineResponseBody.FoundingName = creditLine.FoundingName
+	creditLineResponseBody.CashBalance = creditLine.CashBalance
+	creditLineResponseBody.MonthlyRevenue = creditLine.MonthlyRevenue
+	creditLineResponseBody.RequestedCreditLine = creditLine.RequestedCreditLine
+	creditLineResponseBody.RequestedDate = creditLine.RequestedDate
+	creditLineResponseBody.RequestedServerDate = creditLine.RequestedServerDate
+	creditLineResponseBody.RecommendedCreditLine = creditLine.RecommendedCreditLine
+	return nil
+}
 func (db *CreditLineClient) DefineCreditLine(creditLineRequestBody *models.CreditLineRequestBody, creditLine *models.CreditLine) (err error) {
 	timeStp, _ := time.Parse(time.RFC3339, creditLineRequestBody.RequestedDate)
 	if err != nil {

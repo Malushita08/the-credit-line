@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"github.com/jinzhu/gorm"
 	"time"
 )
@@ -70,102 +69,5 @@ func GetCreditLinesByFoundingName(db *gorm.DB, CreditLines *[]CreditLine, foundi
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func CreateCreditLine(db *gorm.DB, CreditLine *CreditLine, LastCreditLine *CreditLine) (err error) {
-	CreditLine.AllowedRequest, err = ValidateTimes(CreditLine, db, LastCreditLine)
-	if err != nil {
-		return err
-	}
-	err = db.Create(CreditLine).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLine) (bool, error) {
-	//Validate the attemptNumber
-	if CreditLine.AttemptNumber > 1 {
-		//Get the last request
-		_ = db.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Last(&lastCreditLine).Error
-
-		//Validate the last creditLine state
-		if lastCreditLine.State == "ACCEPTED" {
-			//lastCreditLine.AttemptAcceptedNumber++
-			//db.Save(lastCreditLine)
-
-			//Validate not more than 3 request within 2 minutes
-			afterTwoMinutes := lastCreditLine.LastAcceptedRequestDate.Add(time.Second * 3)
-			if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
-				return false, errors.New("You've done more than 3 request within 2 minutes")
-
-				//return false, errors.New("Please, wait two minutes")
-			}
-			//if lastCreditLine.AttemptAcceptedNumber < 3 {
-			//	lastCreditLine.AttemptAcceptedNumber++
-			//	if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
-			//		return false, errors.New("Please, wait two minutes")
-			//	}
-			//	lastCreditLine.LastAcceptedRequestDate = time.Now()
-			//	//lastCreditLine.AttemptAcceptedNumber = 0
-			//	db.Save(lastCreditLine)
-			//	return false, errors.New("aaaaa")
-			//}
-			//lastCreditLine.AttemptAcceptedNumber = 0
-			lastCreditLine.LastAcceptedRequestDate = time.Now()
-			db.Save(lastCreditLine)
-			return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
-
-			//return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
-			//fmt.Printf("aaaaaa", lastCreditLine)
-			//fmt.Printf("bbbbbb", CreditLine)
-			//if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
-			//	fmt.Printf("entrororo aki")
-			//	lastCreditLine.AttemptAcceptedNumber++
-			//	//lastCreditLine.LastAcceptedRequestDate = time.Now()
-			//	db.Save(lastCreditLine)
-			//	if lastCreditLine.AttemptAcceptedNumber >= 3 {
-			//		lastCreditLine.AttemptAcceptedNumber = 0
-			//		db.Save(lastCreditLine)
-			//		//return false, errors.New("aaaa")
-			//		return false, errors.New("Please, wait two minutes")
-			//	}
-			//	//return false, errors.New("Please, wait two minutes")
-			//}
-			//if lastCreditLine.AttemptAcceptedNumber >= 3 && afterTwoMinutes.After(CreditLine.RequestedServerDate) {
-			//	lastCreditLine.AttemptAcceptedNumber = 0
-			//	db.Save(lastCreditLine)
-			//	return false, errors.New("Please, wait two minutes")
-			//}
-			//lastCreditLine.LastAcceptedRequestDate = time.Now()
-
-		} else {
-			//Validate 30 seconds before the last request
-			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
-
-			if CreditLine.RequestedServerDate.Before(afterThirtySeconds) {
-				return false, errors.New("Please, wait 30 seconds")
-			} else {
-				if CreditLine.AttemptNumber <= 3 {
-					return true, nil
-				}
-				return true, errors.New("A sales agent will contact you")
-			}
-		}
-	}
-	return true, nil
-}
-
-func DefineCreditLineResponseBody(creditLine *CreditLine, creditLineResponseBody *CreditLineResponseBody) (err error) {
-	creditLineResponseBody.FoundingType = creditLine.FoundingType
-	creditLineResponseBody.FoundingName = creditLine.FoundingName
-	creditLineResponseBody.CashBalance = creditLine.CashBalance
-	creditLineResponseBody.MonthlyRevenue = creditLine.MonthlyRevenue
-	creditLineResponseBody.RequestedCreditLine = creditLine.RequestedCreditLine
-	creditLineResponseBody.RequestedDate = creditLine.RequestedDate
-	creditLineResponseBody.RequestedServerDate = creditLine.RequestedServerDate
-	creditLineResponseBody.RecommendedCreditLine = creditLine.RecommendedCreditLine
 	return nil
 }

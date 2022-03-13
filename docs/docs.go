@@ -59,7 +59,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.CreditLine"
+                            "$ref": "#/definitions/models.ResponseBody"
                         }
                     }
                 }
@@ -96,8 +96,20 @@ const docTemplate = `{
         "models.CreditLine": {
             "type": "object",
             "properties": {
+                "allowedRequest": {
+                    "type": "boolean"
+                },
+                "attemptAcceptedNumber": {
+                    "type": "integer"
+                },
+                "attemptNumber": {
+                    "type": "integer"
+                },
                 "cashBalance": {
                     "type": "number"
+                },
+                "foundingName": {
+                    "type": "string"
                 },
                 "foundingType": {
                     "type": "string"
@@ -105,16 +117,25 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "lastAcceptedRequestDate": {
+                    "type": "string"
+                },
                 "monthlyRevenue": {
                     "type": "number"
                 },
                 "recommendedCreditLine": {
-                    "type": "string"
+                    "type": "number"
                 },
                 "requestedCreditLine": {
                     "type": "number"
                 },
                 "requestedDate": {
+                    "type": "string"
+                },
+                "requestedServerDate": {
+                    "type": "string"
+                },
+                "state": {
                     "type": "string"
                 }
             }
@@ -125,11 +146,11 @@ const docTemplate = `{
                 "cashBalance": {
                     "type": "number"
                 },
-                "foundingType": {
+                "foundingName": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
+                "foundingType": {
+                    "type": "string"
                 },
                 "monthlyRevenue": {
                     "type": "number"
@@ -138,6 +159,49 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "requestedDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreditLineResponseBody": {
+            "type": "object",
+            "properties": {
+                "cashBalance": {
+                    "type": "number"
+                },
+                "foundingName": {
+                    "type": "string"
+                },
+                "foundingType": {
+                    "type": "string"
+                },
+                "monthlyRevenue": {
+                    "type": "number"
+                },
+                "recommendedCreditLine": {
+                    "type": "number"
+                },
+                "requestedCreditLine": {
+                    "type": "number"
+                },
+                "requestedDate": {
+                    "type": "string"
+                },
+                "requestedServerDate": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ResponseBody": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.CreditLineResponseBody"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
                     "type": "string"
                 }
             }

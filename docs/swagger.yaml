@@ -2,34 +2,76 @@ basePath: /
 definitions:
   models.CreditLine:
     properties:
+      allowedRequest:
+        type: boolean
+      attemptAcceptedNumber:
+        type: integer
+      attemptNumber:
+        type: integer
       cashBalance:
         type: number
+      foundingName:
+        type: string
       foundingType:
         type: string
       id:
         type: integer
+      lastAcceptedRequestDate:
+        type: string
       monthlyRevenue:
         type: number
       recommendedCreditLine:
-        type: string
+        type: number
       requestedCreditLine:
         type: number
       requestedDate:
+        type: string
+      requestedServerDate:
+        type: string
+      state:
         type: string
     type: object
   models.CreditLineRequestBody:
     properties:
       cashBalance:
         type: number
+      foundingName:
+        type: string
       foundingType:
         type: string
-      id:
-        type: integer
       monthlyRevenue:
         type: number
       requestedCreditLine:
         type: number
       requestedDate:
+        type: string
+    type: object
+  models.CreditLineResponseBody:
+    properties:
+      cashBalance:
+        type: number
+      foundingName:
+        type: string
+      foundingType:
+        type: string
+      monthlyRevenue:
+        type: number
+      recommendedCreditLine:
+        type: number
+      requestedCreditLine:
+        type: number
+      requestedDate:
+        type: string
+      requestedServerDate:
+        type: string
+    type: object
+  models.ResponseBody:
+    properties:
+      data:
+        $ref: '#/definitions/models.CreditLineResponseBody'
+      error:
+        type: string
+      message:
         type: string
     type: object
 host: localhost:8080
@@ -67,7 +109,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.CreditLine'
+            $ref: '#/definitions/models.ResponseBody'
       summary: Create a creditLine
       tags:
       - creditLine
