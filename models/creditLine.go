@@ -68,15 +68,21 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 
 		//Validate the last creditLine state
 		if lastCreditLine.State == "ACCEPTED" {
+			lastCreditLine.AttemptAcceptedNumber++
+			db.Save(lastCreditLine)
+
 			//Validate not more than 3 request within 2 minutes
-			afterTwoMinutes := lastCreditLine.RequestedServerDate.Add(time.Second * 2)
-			if CreditLine.AttemptNumber > 3 && afterTwoMinutes.After(CreditLine.RequestedServerDate) {
-				return true, errors.New("Wait 2 minutes please!!")
+			afterTwoMinutes := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
+			if lastCreditLine.AttemptAcceptedNumber >= 3 && afterTwoMinutes.Before(CreditLine.RequestedServerDate) {
+				lastCreditLine.AttemptAcceptedNumber = 0
+				db.Save(lastCreditLine)
+				return true, errors.New("Please, wait two minutes")
 			}
 			return true, errors.New("CONGRATULATIONS!! you already have an approved credit line")
 		} else {
 			//Validate 30 seconds before the last request
 			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
+
 			if CreditLine.RequestedServerDate.Before(afterThirtySeconds) {
 				return false, errors.New("Please, wait 30 seconds")
 			} else {
@@ -88,16 +94,6 @@ func ValidateTimes(CreditLine *CreditLine, db *gorm.DB, lastCreditLine *CreditLi
 		}
 	}
 	return true, nil
-}
-
-func UpdateCreditLine(db *gorm.DB, CreditLine *CreditLine) (err error) {
-	db.Save(CreditLine)
-	return nil
-}
-
-func DeleteCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error) {
-	db.Where("id = ?", id).Delete(CreditLine)
-	return nil
 }
 
 func CalculateNotRequestedData(CreditLine *CreditLine, db *gorm.DB) (err error) {

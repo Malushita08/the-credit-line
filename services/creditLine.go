@@ -113,10 +113,12 @@ func (repository *CreditLineData) CreateCreditLine(c *gin.Context) {
 			c.AbortWithStatusJSON(426, responseBody)
 			return
 		}
-		_ = models.DefineCreditLineResponseBody(&lastCreditLine, &creditLineResponseBody)
-		if responseBody.Message == "A sales agent will contact you" {
+		if responseBody.Message == "A sales agent will contact you" || responseBody.Message == "Please, wait two minutes" {
 			responseBody.Data = nil
 		}
+
+		//Validate CONGRATULATIONS
+		_ = models.DefineCreditLineResponseBody(&lastCreditLine, &creditLineResponseBody)
 		c.AbortWithStatusJSON(200, responseBody)
 		return
 	}
