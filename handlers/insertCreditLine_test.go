@@ -20,7 +20,29 @@ func TestInsertTodo(t *testing.T) {
 		payload      string
 		expectedCode int
 	}{
-		"should return 200": {
+		"should return 200 sme": {
+			payload: `{
+				"foundingType": "sme",
+				"foundingName": "G",
+				"cashBalance": 300,
+				"monthlyRevenue": 3000,
+				"requestedCreditLine": 45,
+				"requestedDate": "2022-03-10T16:59:19.29889741-05:00"
+			}`,
+			expectedCode: 200,
+		},
+		"should return sme rejected": {
+			payload: `{
+				"foundingType": "sme",
+				"foundingName": "H",
+				"cashBalance": 300,
+				"monthlyRevenue": 3000,
+				"requestedCreditLine": 45000000,
+				"requestedDate": "2022-03-10T16:59:19.29889741-05:00"
+			}`,
+			expectedCode: 200,
+		},
+		"should return 200 startup": {
 			payload: `{
 				"foundingType": "startup",
 				"foundingName": "J",
@@ -31,7 +53,7 @@ func TestInsertTodo(t *testing.T) {
 			}`,
 			expectedCode: 200,
 		},
-		"should return rejected": {
+		"should return startup rejected": {
 			payload: `{
 				"foundingType": "startup",
 				"foundingName": "J",
@@ -42,7 +64,7 @@ func TestInsertTodo(t *testing.T) {
 			}`,
 			expectedCode: 200,
 		},
-		"should return 426": {
+		"should return 426 startup": {
 			payload: `{
 				"foundingType": "startup",
 				"foundingName": "J",
@@ -73,7 +95,6 @@ func TestInsertTodo(t *testing.T) {
 				client.AssertExpectations(t)
 			} else {
 				client.AssertNotCalled(t, "CreateCreditLine")
-				//client.AssertNotCalled(t, "Insert")
 			}
 		})
 	}
