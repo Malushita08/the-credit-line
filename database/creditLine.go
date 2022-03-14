@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Malushita08/the-credit-line/models"
 	"github.com/jinzhu/gorm"
 	"math"
@@ -92,10 +91,7 @@ func (db *CreditLineClient) ValidateTimes(CreditLine *models.CreditLine) error {
 			//Validate not more than 3 request within 2 minutes
 			afterTwoMinutes := lastCreditLine.LastAcceptedRequestDate.Add(time.Second * 3)
 			if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
-				fmt.Printf("entrooooou")
-				fmt.Printf("jijiii", CreditLine.AttemptAcceptedNumber)
 				if lastCreditLine.AttemptAcceptedNumber < 3 {
-					fmt.Printf("entrooooou2")
 					lastCreditLine.LastAcceptedRequestDate = time.Now()
 					db.DbSession.Save(lastCreditLine)
 					return errors.New("CONGRATULATIONS!! you already have an approved credit line")
