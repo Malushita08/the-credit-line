@@ -66,6 +66,7 @@ func (db *CreditLineClient) CreateCreditLine(creditLineRequestBody models.Credit
 	responseBody.Data = &creditLineResponseBody
 	if creditLine.State == "REJECTED" {
 		responseBody.Message = "REJECTED"
+		responseBody.Data = nil
 	}
 	lastCreditLine, err := db.ValidateTimes(&creditLine)
 

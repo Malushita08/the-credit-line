@@ -25,7 +25,7 @@ func ConnectDB() (*gorm.DB, error) {
 	//}
 	//return DbSession, nil
 
-	////MYSQL
+	//MYSQL
 	USER := "root"
 	PASS := "123456"
 	HOST := "localhost"
