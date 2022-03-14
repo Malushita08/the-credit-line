@@ -11,7 +11,6 @@ import (
 	"github.com/Malushita08/the-credit-line/database"
 	_ "github.com/Malushita08/the-credit-line/docs"
 	"github.com/Malushita08/the-credit-line/handlers"
-	"github.com/Malushita08/the-credit-line/services"
 	"github.com/gin-gonic/gin"
 	"log"
 
@@ -27,7 +26,6 @@ func main() {
 	}
 
 	//CreditLine instance
-	creditLine2 := services.NewCreditLine()
 	client := &database.CreditLineClient{
 		DbSession: db,
 	}
@@ -37,11 +35,8 @@ func main() {
 
 	// Routes
 	creditLine := r.Group("/creditLines")
-	creditLine.POST("/", handlers.InsertCreditLine(client))
-
-	r.GET("/creditLines/", creditLine2.GetCreditLines)
-	r.GET("/creditLines/:id", creditLine2.GetCreditLine)
-	r.GET("/creditLines/foundingName/:foundingName", creditLine2.GetCreditLineByFoundingName)
+	creditLine.POST("/", handlers.CreateCreditLine(client))
+	creditLine.GET("/foundingName/:foundingName", handlers.GetCreditLinesByFoundingName(client))
 
 	// Swagger documentation
 	url := ginSwagger.URL("http://localhost:8080/swagger/doc.json") // The url pointing to API definition

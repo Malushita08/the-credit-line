@@ -11,6 +11,7 @@ import (
 
 type CreditLineInterface interface {
 	CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (creditLine models.ResponseBody, err error)
+	GetCreditLinesByFoundingName(foundingName string) (CreditLines []models.CreditLine, err error)
 }
 
 type CreditLineClient struct {
@@ -53,6 +54,15 @@ func (db *CreditLineClient) CalculateNotRequestedData(CreditLine *models.CreditL
 	_ = db.DbSession.Model(&CreditLine).Where("founding_name = ?", CreditLine.FoundingName).Count(&attemptNumber).Error
 	CreditLine.AttemptNumber = attemptNumber + 1
 	return nil
+}
+
+func (db *CreditLineClient) GetCreditLinesByFoundingName(foundingName string) (CreditLines []models.CreditLine, err error) {
+	//creditLines := []models.CreditLine{}
+	err = db.DbSession.Where("founding_name = ?", foundingName).Find(&CreditLines).Error
+	if err != nil {
+		return CreditLines, err
+	}
+	return CreditLines, nil
 }
 
 func (db *CreditLineClient) CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (responseBody models.ResponseBody, err error) {

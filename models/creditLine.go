@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
 	"time"
 )
 
@@ -46,28 +45,4 @@ type ResponseBody struct {
 	Message string                  `bson:"message" json:"message"`
 	Data    *CreditLineResponseBody `bson:"data" json:"data"`
 	Error   *string                 `bson:"error" json:"error"`
-}
-
-func GetCreditLines(db *gorm.DB, CreditLines *[]CreditLine) (err error) {
-	err = db.Find(CreditLines).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetCreditLine(db *gorm.DB, CreditLine *CreditLine, id string) (err error) {
-	err = db.Where("id = ?", id).First(CreditLine).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetCreditLinesByFoundingName(db *gorm.DB, CreditLines *[]CreditLine, foundingName string) (err error) {
-	err = db.Where("founding_name = ?", foundingName).Find(CreditLines).Error
-	if err != nil {
-		return err
-	}
-	return nil
 }

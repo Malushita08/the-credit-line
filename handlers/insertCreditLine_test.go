@@ -40,7 +40,7 @@ func TestInsertTodo(t *testing.T) {
 				"requestedCreditLine": 450000000,
 				"requestedDate": "2022-03-10T16:59:19.29889741-05:00"
 			}`,
-			expectedCode: 400,
+			expectedCode: 200,
 		},
 		"should return 426": {
 			payload: `{
@@ -61,18 +61,19 @@ func TestInsertTodo(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client.On("CreateCreditLine", mock.Anything).Return(models.CreditLineResponseBody{}, nil)
+			client.On("CreateCreditLine", mock.Anything).Return(models.ResponseBody{}, nil)
 			req, _ := http.NewRequest("POST", "/creditLines", strings.NewReader(test.payload))
 			rec := httptest.NewRecorder()
 
 			r := gin.Default()
-			r.POST("/creditLines", handlers.InsertCreditLine(client))
+			r.POST("/creditLines", handlers.CreateCreditLine(client))
 			r.ServeHTTP(rec, req)
 
 			if test.expectedCode == 200 {
 				client.AssertExpectations(t)
 			} else {
-				client.AssertNotCalled(t, "Insert")
+				client.AssertNotCalled(t, "CreateCreditLine")
+				//client.AssertNotCalled(t, "Insert")
 			}
 		})
 	}

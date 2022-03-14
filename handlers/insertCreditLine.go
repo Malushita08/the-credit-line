@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// InsertCreditLine godoc
+// CreateCreditLine godoc
 // @Summary Create a creditLine
 // @Description Create a creditLine
 // @Tags creditLine
@@ -15,7 +15,7 @@ import (
 // @Param creditLine body models.CreditLineRequestBody true "creditLine Data"
 // @Success 200 {object} models.ResponseBody
 // @Router /creditLines [post]
-func InsertCreditLine(db database.CreditLineInterface) gin.HandlerFunc {
+func CreateCreditLine(db database.CreditLineInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		creditLineRequestBody := models.CreditLineRequestBody{}
 		err := c.BindJSON(&creditLineRequestBody)
