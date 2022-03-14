@@ -17,24 +17,27 @@ This application was documented using Swagger, you can access this going to the 
 
 - You'll see this interface
 
-![img_2.png](img_2.png)
+![img_2.png](images/img_2.png)
 
 - You have to click the post section and then click on execute
 
-![img_8.png](img_8.png)
+![img_8.png](images/img_8.png)
 
 - You can edit the requestBody values, change them, and now press execute 
 
- ![img_9.png](img_9.png)
+![img_9.png](images/img_9.png)
 
 - You'll see the response body in the below part
-![img_6.png](img_6.png)
+
+![img_6.png](images/img_6.png)
 
 - Even though it was not part of the requirements, I implemented a get end point, so I can check the requests made by a Founding
-![img_7.png](img_7.png)
+
+![img_7.png](images/img_7.png)
 
 - To use this, click on "Try it out", write the foundingName and then execute
-![img_10.png](img_10.png)
+
+![img_10.png](images/img_10.png)
 
 Nevertheless, you can always test the endpoint using postman or your favourite application.
 
