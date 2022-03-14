@@ -18,18 +18,16 @@ type CreditLineClient struct {
 	DbSession *gorm.DB
 }
 
+// DefineCreditLine
+// This function returns a complete creditLine struct based on the requestBody and computing the non-requested fields
 func (db *CreditLineClient) DefineCreditLine(creditLineRequestBody *models.CreditLineRequestBody, creditLine *models.CreditLine) (err error) {
-	timeStp, _ := time.Parse(time.RFC3339, creditLineRequestBody.RequestedDate)
-	if err != nil {
-		return err
-	}
 	creditLine.FoundingType = creditLineRequestBody.FoundingType
 	creditLine.FoundingName = creditLineRequestBody.FoundingName
 	creditLine.CashBalance = creditLineRequestBody.CashBalance
 	creditLine.MonthlyRevenue = creditLineRequestBody.MonthlyRevenue
 	creditLine.RequestedCreditLine = creditLineRequestBody.RequestedCreditLine
-	creditLine.RequestedDate = timeStp
-	creditLine.RequestedServerDate = time.Now()
+	creditLine.RequestedDate = time.Now()
+	creditLine.LastAcceptedRequestDate = time.Now()
 	_ = db.CalculateNotRequestedData(creditLine)
 	return nil
 }
@@ -56,29 +54,27 @@ func (db *CreditLineClient) CalculateNotRequestedData(CreditLine *models.CreditL
 	return nil
 }
 
-func (db *CreditLineClient) GetCreditLinesByFoundingName(foundingName string) (CreditLines []models.CreditLine, err error) {
-	//creditLines := []models.CreditLine{}
-	err = db.DbSession.Where("founding_name = ?", foundingName).Find(&CreditLines).Error
-	if err != nil {
-		return CreditLines, err
-	}
-	return CreditLines, nil
-}
-
 func (db *CreditLineClient) CreateCreditLine(creditLineRequestBody models.CreditLineRequestBody) (responseBody models.ResponseBody, err error) {
+	//lastCreditLine := models.CreditLine{}
 	creditLine := models.CreditLine{}
 	creditLineResponseBody := models.CreditLineResponseBody{}
 	_ = db.DefineCreditLine(&creditLineRequestBody, &creditLine)
+
 	_ = db.DefineCreditLineResponseBody(&creditLine, &creditLineResponseBody)
+
 	responseBody.Message = "ACCEPTED"
 	responseBody.Data = &creditLineResponseBody
 	if creditLine.State == "REJECTED" {
 		responseBody.Message = "REJECTED"
 	}
-	err = db.ValidateTimes(&creditLine)
+	lastCreditLine, err := db.ValidateTimes(&creditLine)
+
 	if err != nil {
 		if err.Error() == "A sales agent will contact you" || err.Error() == "Please, wait 30 seconds" || err.Error() == "You've done more than 3 request within the last 2 minutes" {
 			responseBody.Data = nil
+		}
+		if err.Error() == "CONGRATULATIONS!! you already have an approved credit line" {
+			_ = db.DefineCreditLineResponseBody(lastCreditLine, &creditLineResponseBody)
 		}
 		responseBody.Message = err.Error()
 		return responseBody, err
@@ -87,7 +83,7 @@ func (db *CreditLineClient) CreateCreditLine(creditLineRequestBody models.Credit
 	return responseBody, nil
 }
 
-func (db *CreditLineClient) ValidateTimes(CreditLine *models.CreditLine) error {
+func (db *CreditLineClient) ValidateTimes(CreditLine *models.CreditLine) (lastCreditLine *models.CreditLine, err error) {
 	//Validate the attemptNumber
 	if CreditLine.AttemptNumber > 1 {
 		//Get the last request
@@ -98,36 +94,48 @@ func (db *CreditLineClient) ValidateTimes(CreditLine *models.CreditLine) error {
 		if lastCreditLine.State == "ACCEPTED" {
 			lastCreditLine.AttemptAcceptedNumber++
 			db.DbSession.Save(&lastCreditLine)
+
 			//Validate not more than 3 request within 2 minutes
 			afterTwoMinutes := lastCreditLine.LastAcceptedRequestDate.Add(time.Second * 3)
-			if CreditLine.RequestedServerDate.Before(afterTwoMinutes) {
+			if CreditLine.RequestedDate.Before(afterTwoMinutes) {
 				if lastCreditLine.AttemptAcceptedNumber < 3 {
 					lastCreditLine.LastAcceptedRequestDate = time.Now()
-					db.DbSession.Save(lastCreditLine)
-					return errors.New("CONGRATULATIONS!! you already have an approved credit line")
+					db.DbSession.Save(&lastCreditLine)
+					return &lastCreditLine, errors.New("CONGRATULATIONS!! you already have an approved credit line")
 				}
-				return errors.New("You've done more than 3 request within the last 2 minutes")
+				return nil, errors.New("You've done more than 3 request within the last 2 minutes")
 			}
 			lastCreditLine.LastAcceptedRequestDate = time.Now()
 			lastCreditLine.AttemptAcceptedNumber = 0
-			db.DbSession.Save(lastCreditLine)
-			return errors.New("CONGRATULATIONS!! you already have an approved credit line")
+			db.DbSession.Save(&lastCreditLine)
+			return &lastCreditLine, errors.New("CONGRATULATIONS!! you already have an approved credit line")
 		} else {
-			//Validate 30 seconds later the last request
-			afterThirtySeconds := lastCreditLine.RequestedServerDate.Add(time.Second * 3)
-			if CreditLine.RequestedServerDate.Before(afterThirtySeconds) {
-				return errors.New("Please, wait 30 seconds")
+			//Validate 30 seconds after the last request
+			afterThirtySeconds := lastCreditLine.RequestedDate.Add(time.Second * 3)
+			if CreditLine.RequestedDate.Before(afterThirtySeconds) {
+				return nil, errors.New("Please, wait 30 seconds")
 			} else {
+				//Validate attempts
 				if CreditLine.AttemptNumber <= 3 {
-					return nil
+					return nil, nil
 				}
-				return errors.New("A sales agent will contact you")
+				return nil, errors.New("A sales agent will contact you")
 			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
+func (db *CreditLineClient) GetCreditLinesByFoundingName(foundingName string) (CreditLines []models.CreditLine, err error) {
+	err = db.DbSession.Where("founding_name = ?", foundingName).Find(&CreditLines).Error
+	if err != nil {
+		return CreditLines, err
+	}
+	return CreditLines, nil
+}
+
+// DefineCreditLineResponseBody
+// This function returns a responseBody based on a creditLine struct. This is in order to show just the necessary data.
 func (db *CreditLineClient) DefineCreditLineResponseBody(creditLine *models.CreditLine, creditLineResponseBody *models.CreditLineResponseBody) (err error) {
 	creditLineResponseBody.FoundingType = creditLine.FoundingType
 	creditLineResponseBody.FoundingName = creditLine.FoundingName
@@ -135,7 +143,6 @@ func (db *CreditLineClient) DefineCreditLineResponseBody(creditLine *models.Cred
 	creditLineResponseBody.MonthlyRevenue = creditLine.MonthlyRevenue
 	creditLineResponseBody.RequestedCreditLine = creditLine.RequestedCreditLine
 	creditLineResponseBody.RequestedDate = creditLine.RequestedDate
-	creditLineResponseBody.RequestedServerDate = creditLine.RequestedServerDate
 	creditLineResponseBody.RecommendedCreditLine = creditLine.RecommendedCreditLine
 	return nil
 }

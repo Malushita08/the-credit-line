@@ -4,8 +4,8 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server.",
-        "title": "Gin Swagger Example API",
+        "description": "API that calculates a recommended creditLine for a Founding based on its type and other fields.",
+        "title": "The Credit Line API",
         "contact": {},
         "version": "1.0"
     },
@@ -13,24 +13,6 @@
     "basePath": "/",
     "paths": {
         "/creditLines": {
-            "get": {
-                "description": "get all creditLines",
-                "tags": [
-                    "creditLine"
-                ],
-                "summary": "Get all creditLines",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.CreditLine"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "Create a creditLine",
                 "consumes": [
@@ -61,18 +43,18 @@
                 }
             }
         },
-        "/creditLines/{id}": {
+        "/creditLines/foundingName/{foundingName}": {
             "get": {
-                "description": "Get a creditLine by id",
+                "description": "Get all the creditLines requests a foundingName did",
                 "tags": [
                     "creditLine"
                 ],
-                "summary": "Get a creditLine by id",
+                "summary": "Get all the creditLines requests a foundingName did",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "creditLine ID",
-                        "name": "id",
+                        "description": "creditLine foundingName",
+                        "name": "foundingName",
                         "in": "path",
                         "required": true
                     }
@@ -81,7 +63,10 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.CreditLine"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.CreditLine"
+                            }
                         }
                     }
                 }
@@ -128,9 +113,6 @@
                 "requestedDate": {
                     "type": "string"
                 },
-                "requestedServerDate": {
-                    "type": "string"
-                },
                 "state": {
                     "type": "string"
                 }
@@ -153,9 +135,6 @@
                 },
                 "requestedCreditLine": {
                     "type": "number"
-                },
-                "requestedDate": {
-                    "type": "string"
                 }
             }
         },
@@ -181,9 +160,6 @@
                     "type": "number"
                 },
                 "requestedDate": {
-                    "type": "string"
-                },
-                "requestedServerDate": {
                     "type": "string"
                 }
             }

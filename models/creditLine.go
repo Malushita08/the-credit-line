@@ -12,7 +12,6 @@ type CreditLine struct {
 	MonthlyRevenue          float64   `bson:"monthlyRevenue" json:"monthlyRevenue"`
 	RequestedCreditLine     float64   `bson:"requestedCreditLine" json:"requestedCreditLine"`
 	RequestedDate           time.Time `bson:"requestedDate" json:"requestedDate"`
-	RequestedServerDate     time.Time `bson:"requestedServerDate" json:"requestedServerDate"`
 	RecommendedCreditLine   float64   `bson:"recommendedCreditLine" json:"recommendedCreditLine"`
 	State                   string    `bson:"state" json:"state"`
 	AllowedRequest          bool      `bson:"allowedRequest" json:"allowedRequest"`
@@ -21,13 +20,14 @@ type CreditLine struct {
 	LastAcceptedRequestDate time.Time `bson:"lastAcceptedRequestDate" json:"lastAcceptedRequestDate"`
 }
 
+// CreditLineRequestBody
+// swagger:model
 type CreditLineRequestBody struct {
 	FoundingType        string  `bson:"foundingType" json:"foundingType"`
 	FoundingName        string  `bson:"foundingName" json:"foundingName"`
 	CashBalance         float64 `bson:"cashBalance" json:"cashBalance"`
 	MonthlyRevenue      float64 `bson:"monthlyRevenue" json:"monthlyRevenue"`
 	RequestedCreditLine float64 `bson:"requestedCreditLine" json:"requestedCreditLine"`
-	RequestedDate       string  `bson:"requestedDate" json:"requestedDate"`
 }
 
 type CreditLineResponseBody struct {
@@ -37,7 +37,6 @@ type CreditLineResponseBody struct {
 	MonthlyRevenue        float64   `bson:"monthlyRevenue" json:"monthlyRevenue"`
 	RequestedCreditLine   float64   `bson:"requestedCreditLine" json:"requestedCreditLine"`
 	RequestedDate         time.Time `bson:"requestedDate" json:"requestedDate"`
-	RequestedServerDate   time.Time `bson:"requestedServerDate" json:"requestedServerDate"`
 	RecommendedCreditLine float64   `bson:"recommendedCreditLine" json:"recommendedCreditLine"`
 }
 

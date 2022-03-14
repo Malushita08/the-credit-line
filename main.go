@@ -1,7 +1,6 @@
-// @title Gin Swagger Example API
+// @title The Credit Line API
 // @version 1.0
-// @description This is a sample server.
-
+// @description API that calculates a recommended creditLine for a Founding based on its type and other fields.
 // @host localhost:8080
 // @BasePath /
 // @schemes http

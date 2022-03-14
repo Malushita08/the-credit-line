@@ -12,3 +12,10 @@ Finally you have to go to your postman or favorite application and start trying 
 
 
 No olvides cambiar el tiempo a 30 segundos
+
+
+Para el test usamos mocks 
+
+This application was documented using Swagger, you can access this going to the following link :
+http://localhost:8080/swagger/index.html#/
+Hopping this helps you triying 

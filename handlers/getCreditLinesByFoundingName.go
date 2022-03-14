@@ -7,13 +7,12 @@ import (
 )
 
 // GetCreditLinesByFoundingName godoc
-// @Summary Create a creditLine
-// @Description Create a creditLine
+// @Summary Get all the creditLines requests a foundingName did
+// @Description Get all the creditLines requests a foundingName did
 // @Tags creditLine
-// @Accept json
-// @Param creditLine body models.CreditLineRequestBody true "creditLine Data"
-// @Success 200 {object} models.ResponseBody
-// @Router /creditLines [post]
+// @Param foundingName path string true "creditLine foundingName"
+// @Success 200 {array} models.CreditLine
+// @Router /creditLines/foundingName/{foundingName} [get]
 func GetCreditLinesByFoundingName(db database.CreditLineInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		foundingName := c.Param("foundingName")

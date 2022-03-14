@@ -20,7 +20,8 @@ func CreateCreditLine(db database.CreditLineInterface) gin.HandlerFunc {
 		creditLineRequestBody := models.CreditLineRequestBody{}
 		err := c.BindJSON(&creditLineRequestBody)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+
+			c.JSON(http.StatusBadRequest, gin.H{"message": err})
 			return
 		}
 		responseBody, err := db.CreateCreditLine(creditLineRequestBody)

@@ -17,24 +17,6 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/creditLines": {
-            "get": {
-                "description": "get all creditLines",
-                "tags": [
-                    "creditLine"
-                ],
-                "summary": "Get all creditLines",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.CreditLine"
-                            }
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "Create a creditLine",
                 "consumes": [
@@ -65,18 +47,18 @@ const docTemplate = `{
                 }
             }
         },
-        "/creditLines/{id}": {
+        "/creditLines/foundingName/{foundingName}": {
             "get": {
-                "description": "Get a creditLine by id",
+                "description": "Get all the creditLines requests a foundingName did",
                 "tags": [
                     "creditLine"
                 ],
-                "summary": "Get a creditLine by id",
+                "summary": "Get all the creditLines requests a foundingName did",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "creditLine ID",
-                        "name": "id",
+                        "description": "creditLine foundingName",
+                        "name": "foundingName",
                         "in": "path",
                         "required": true
                     }
@@ -85,7 +67,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.CreditLine"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.CreditLine"
+                            }
                         }
                     }
                 }
@@ -132,9 +117,6 @@ const docTemplate = `{
                 "requestedDate": {
                     "type": "string"
                 },
-                "requestedServerDate": {
-                    "type": "string"
-                },
                 "state": {
                     "type": "string"
                 }
@@ -157,9 +139,6 @@ const docTemplate = `{
                 },
                 "requestedCreditLine": {
                     "type": "number"
-                },
-                "requestedDate": {
-                    "type": "string"
                 }
             }
         },
@@ -185,9 +164,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "requestedDate": {
-                    "type": "string"
-                },
-                "requestedServerDate": {
                     "type": "string"
                 }
             }
@@ -215,8 +191,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{"http"},
-	Title:            "Gin Swagger Example API",
-	Description:      "This is a sample server.",
+	Title:            "The Credit Line API",
+	Description:      "API that calculates a recommended creditLine for a Founding based on its type and other fields.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }
